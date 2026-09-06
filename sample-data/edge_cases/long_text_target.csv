@@ -1,0 +1,3 @@
+customer_id,name,city,tier,effective_from,effective_to,is_current
+1101,"Ravi Kumar with an extremely long business description that should still render cleanly in the UI",Bengaluru,Gold,2026-06-07,,true
+1102,"Priya Sharma with a very long location note and extra wording to test layout handling",Mumbai,Silver,2026-06-07,,true

@@ -1,0 +1,4 @@
+customer_id,name,city,tier,effective_from,effective_to,is_current
+1001,Ravi,Chennai,Gold,2026-05-01,2026-06-01,false
+1001,Ravi,Mumbai,Gold,2026-06-01,,true
+1002,Priya,Mumbai,Silver,2026-05-01,,true

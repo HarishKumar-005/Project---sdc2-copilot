@@ -1,0 +1,4 @@
+customer_id,source_system,name,city,tier,effective_from,effective_to,is_current
+401,CRM,Ravi,Chennai,Gold,2026-06-07,,true
+401,ERP,Ravi,Bengaluru,Gold,2026-06-07,,true
+402,CRM,Priya,Mumbai,Silver,2026-06-07,,true

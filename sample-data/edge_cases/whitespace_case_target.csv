@@ -1,0 +1,3 @@
+customer_id,name,city,tier,effective_from,effective_to,is_current
+701,Ravi,Chennai,Gold,2026-06-07,,true
+702,Priya,Mumbai,Silver,2026-06-07,,true

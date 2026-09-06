@@ -1,0 +1,4 @@
+customer_id,name,city,tier,effective_from,effective_to,is_current
+801,Müller,Ação,Gold,2026-06-07,,true
+802,山田太郎,大阪,Silver,2026-06-07,,true
+803,Renée,Montréal,Bronze,2026-06-07,,true

@@ -1,0 +1,5 @@
+customer_id,source_system,name,city,tier
+401,CRM,Ravi,Bengaluru,Gold
+401,ERP,Ravi,Bengaluru,Gold
+402,CRM,Priya,Mumbai,Silver
+403,CRM,Arun,Delhi,Gold

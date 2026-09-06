@@ -1,0 +1,3 @@
+customer_id,name,city,tier
+1101,"Ravi Kumar with an extremely long business description that should still render cleanly in the UI",Chennai,Gold
+1102,"Priya Sharma with a very long location note and extra wording to test layout handling",Mumbai,Silver

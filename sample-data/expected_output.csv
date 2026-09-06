@@ -1,0 +1,6 @@
+customer_id,name,city,tier,effective_from,effective_to,is_current
+101,Ravi,Chennai,Gold,2026-06-07,2026-06-08,false
+101,Ravi,Bengaluru,Gold,2026-06-08,,true
+102,Priya,Mumbai,Silver,2026-06-07,,true
+103,Arun,Delhi,Gold,2026-06-07,,true
+104,Kiran,Hyderabad,Bronze,2026-06-08,,true
