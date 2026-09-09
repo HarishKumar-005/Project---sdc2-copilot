@@ -1,0 +1,22 @@
+{
+  "unoptimized_with_tracemalloc_sec": {
+    "min": 17.5084,
+    "median": 17.6846,
+    "max": 17.8398
+  },
+  "unoptimized_without_tracemalloc_sec": {
+    "min": 3.0153,
+    "median": 3.1889,
+    "max": 3.2764
+  },
+  "unoptimized_consecutive_no_gc_sec": {
+    "min": 3.0088,
+    "median": 3.0206,
+    "max": 3.3005
+  },
+  "m23_candidate_lazy_sec": {
+    "min": 0.4478,
+    "median": 0.4739,
+    "max": 0.5009
+  }
+}

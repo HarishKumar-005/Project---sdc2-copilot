@@ -362,19 +362,46 @@ h1, h2, h3, h4, h5, h6,
 }
 
 /* --- Buttons --- */
-.stButton > button {
-    background: var(--accent) !important;
+.stButton > button[kind="primary"],
+.stButton > button[data-testid="baseButton-primary"] {
+    background: linear-gradient(135deg, var(--accent) 0%, #3B72DE 100%) !important;
     color: #fff !important;
-    border: none !important;
-    border-radius: var(--radius) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: var(--radius-lg) !important;
     font-weight: 600 !important;
-    padding: 0.55rem 1.2rem !important;
-    transition: background var(--transition), box-shadow var(--transition) !important;
+    font-size: 0.95rem !important;
+    padding: 0.75rem 1.6rem !important;
+    box-shadow: 0 4px 14px rgba(79, 140, 255, 0.35) !important;
+    letter-spacing: 0.02em !important;
+    transition: all var(--transition) !important;
 }
 
-.stButton > button:hover {
-    background: var(--accent-hover) !important;
-    box-shadow: 0 0 0 3px rgba(79, 140, 255, 0.25) !important;
+.stButton > button[kind="primary"]:hover,
+.stButton > button[data-testid="baseButton-primary"]:hover {
+    background: linear-gradient(135deg, var(--accent-hover) 0%, #4F8CFF 100%) !important;
+    box-shadow: 0 6px 20px rgba(79, 140, 255, 0.5) !important;
+    transform: translateY(-1px);
+}
+
+.stButton > button[kind="secondary"],
+.stButton > button[data-testid="baseButton-secondary"],
+.stButton > button:not([kind="primary"]):not([data-testid="baseButton-primary"]) {
+    background: var(--surface-2) !important;
+    color: var(--text-1) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius) !important;
+    font-weight: 500 !important;
+    font-size: 0.85rem !important;
+    padding: 0.55rem 1.1rem !important;
+    transition: all var(--transition) !important;
+}
+
+.stButton > button[kind="secondary"]:hover,
+.stButton > button[data-testid="baseButton-secondary"]:hover,
+.stButton > button:not([kind="primary"]):not([data-testid="baseButton-primary"]):hover {
+    background: var(--surface-1) !important;
+    border-color: var(--accent) !important;
+    color: var(--text-1) !important;
 }
 
 .stButton > button:focus-visible {
@@ -385,16 +412,19 @@ h1, h2, h3, h4, h5, h6,
 /* Secondary / download buttons */
 .stDownloadButton > button {
     background: var(--surface-2) !important;
-    color: var(--accent) !important;
+    color: var(--text-1) !important;
     border: 1px solid var(--border) !important;
     border-radius: var(--radius) !important;
-    font-weight: 600 !important;
-    transition: border-color var(--transition) !important;
+    font-weight: 500 !important;
+    font-size: 0.85rem !important;
+    padding: 0.55rem 1.1rem !important;
+    transition: all var(--transition) !important;
 }
 
 .stDownloadButton > button:hover {
     border-color: var(--accent) !important;
     background: var(--surface-1) !important;
+    color: var(--accent) !important;
 }
 
 .stDownloadButton > button:focus-visible {
@@ -697,3 +727,143 @@ hr, [data-testid="stDivider"] {
 .stSpinner > div {
     border-top-color: var(--accent) !important;
 }
+
+/* ── Hero Result Summary Card ──────────────────────── */
+
+.hero-card {
+    background: linear-gradient(180deg, var(--surface-1) 0%, rgba(17, 24, 39, 0.95) 100%);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent) 0%, var(--success) 100%);
+}
+
+.hero-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-1);
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.hero-subtitle {
+    font-size: 0.85rem;
+    color: var(--text-2);
+    margin-bottom: 16px;
+}
+
+.what-happened-card {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-top: 16px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--text-1);
+}
+
+.what-happened-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+    margin-bottom: 4px;
+}
+
+/* ── Dataset / Input Card ──────────────────────────── */
+
+.dataset-card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    margin-bottom: 12px;
+}
+
+.dataset-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.dataset-name {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-1);
+}
+
+.dataset-meta {
+    font-size: 0.78rem;
+    color: var(--text-2);
+}
+
+/* ── Diff Table ────────────────────────────────────── */
+
+.diff-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    margin-top: 8px;
+}
+
+.diff-table th {
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-2);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.72rem;
+    letter-spacing: 0.05em;
+}
+
+.diff-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-1);
+}
+
+.diff-cell-old {
+    color: var(--error);
+    background: rgba(239, 68, 68, 0.08);
+    border-radius: 4px;
+    padding: 2px 6px;
+    text-decoration: line-through;
+    display: inline-block;
+}
+
+.diff-cell-new {
+    color: var(--success);
+    background: rgba(34, 197, 94, 0.08);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.section-subtitle {
+    font-size: 0.82rem;
+    color: var(--text-2);
+    margin-top: -8px;
+    margin-bottom: 14px;
+}
+

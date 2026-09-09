@@ -11,28 +11,67 @@ from typing import BinaryIO, Union
 
 import polars as pl
 
+from .exceptions import InvalidTemporalValueError
+
 # SCD2 metadata columns (auto-detected and excluded from tracked columns)
 SCD2_META_COLUMNS = {"effective_from", "effective_to", "is_current"}
 
+# Supported date and datetime input formats for SCD2 temporal metadata columns
+SUPPORTED_DATE_FORMATS: list[str] = [
+    "%Y-%m-%d",
+]
 
-def load_csv(source: Union[str, Path, BinaryIO]) -> pl.DataFrame:
+SUPPORTED_DATETIME_FORMATS: list[str] = [
+    "%Y-%m-%d %H:%M:%S",
+    "%Y-%m-%dT%H:%M:%S",
+    "%Y-%m-%d %H:%M",
+    "%Y-%m-%dT%H:%M",
+    "%Y-%m-%d %H:%M:%S%.f",
+    "%Y-%m-%dT%H:%M:%S%.f",
+    "%Y-%m-%d %H:%M:%SZ",
+    "%Y-%m-%dT%H:%M:%SZ",
+    "%Y-%m-%d %H:%M:%S%.fZ",
+    "%Y-%m-%dT%H:%M:%S%.fZ",
+    "%Y-%m-%d %H:%M:%S%:z",
+    "%Y-%m-%dT%H:%M:%S%:z",
+    "%Y-%m-%d %H:%M:%S%.f%:z",
+    "%Y-%m-%dT%H:%M:%S%.f%:z",
+]
+
+
+def load_csv(
+    source: Union[str, Path, BinaryIO], *, dataset_name: str | None = None
+) -> pl.DataFrame:
     """Load a CSV file into a Polars DataFrame with normalization.
 
     Normalization steps:
     1. Strip whitespace from column names
     2. Lowercase all column names
     3. Strip whitespace from string values
-    4. Convert 'effective_from' / 'effective_to' to Date type if present
+    4. Convert 'effective_from' / 'effective_to' to Date type deterministically
     5. Convert 'is_current' to boolean if present
+
+    Supported temporal inputs:
+    - ISO 8601 date: YYYY-MM-DD
+    - ISO 8601 datetime: YYYY-MM-DD HH:MM:SS or YYYY-MM-DDTHH:MM:SS
+      (with optional fractional seconds and timezone indicators)
+    - Already inferred pl.Date or pl.Datetime
+
+    Normalized internal representation:
+    All temporal SCD2 metadata is normalized to pl.Date. For timezone-aware
+    timestamps, the calendar date of the timestamp is preserved.
+    Temporal interval convention and boundary semantics are formalized in M1.3.
 
     Args:
         source: File path, Path object, or file-like object (e.g., UploadedFile).
+        dataset_name: Optional dataset name (e.g., 'source' or 'target') for error context.
 
     Returns:
         Normalized Polars DataFrame.
 
     Raises:
         ValueError: If the CSV is empty or has no columns.
+        InvalidTemporalValueError: If unparseable or invalid temporal values are encountered.
     """
     if isinstance(source, (str, Path)):
         df = pl.read_csv(source, infer_schema_length=1000, try_parse_dates=True)
@@ -55,25 +94,107 @@ def load_csv(source: Union[str, Path, BinaryIO]) -> pl.DataFrame:
         )
 
     # Normalize SCD2 metadata columns if present
-    df = _normalize_scd2_columns(df)
+    df = _normalize_scd2_columns(df, dataset_name=dataset_name)
 
     return df
 
 
-def _normalize_scd2_columns(df: pl.DataFrame) -> pl.DataFrame:
+def _normalize_date_column(
+    df: pl.DataFrame, col: str, *, dataset_name: str | None = None
+) -> pl.DataFrame:
+    """Normalize a temporal column to pl.Date without loss or silent null coercion.
+
+    Strategy:
+    - pl.Date: preserved unchanged.
+    - pl.Null: cast to pl.Date preserving nulls.
+    - pl.Datetime: converted directly via .dt.date() without text conversion.
+    - Strings / other: parsed across supported ISO date and datetime formats.
+      Empty strings or whitespace-only strings become null.
+      Any unparseable non-null values raise InvalidTemporalValueError.
+
+    Args:
+        df: Polars DataFrame containing the column.
+        col: Column name to normalize.
+        dataset_name: Optional dataset context ('source' or 'target').
+
+    Returns:
+        DataFrame with the column normalized to pl.Date.
+
+    Raises:
+        InvalidTemporalValueError: If unparseable or invalid temporal values are found.
+    """
+    if col not in df.columns:
+        return df
+
+    dtype = df[col].dtype
+
+    # 1. Already pl.Date: preserve directly
+    if dtype == pl.Date:
+        return df
+
+    # 2. pl.Null: cast to pl.Date
+    if dtype == pl.Null:
+        return df.with_columns(pl.col(col).cast(pl.Date))
+
+    # 3. Already pl.Datetime: convert directly via .dt.date() without text conversion
+    if isinstance(dtype, pl.Datetime):
+        return df.with_columns(pl.col(col).dt.date())
+
+    # 4. String or other types: parse deterministically across supported ISO formats
+    try:
+        cleaned = (
+            pl.when(pl.col(col).cast(pl.Utf8).str.strip_chars() == "")
+            .then(None)
+            .otherwise(pl.col(col).cast(pl.Utf8).str.strip_chars())
+        )
+
+        parse_exprs = [
+            cleaned.str.to_date(fmt, strict=False) for fmt in SUPPORTED_DATE_FORMATS
+        ]
+        parse_exprs.extend(
+            cleaned.str.to_datetime(fmt, strict=False).dt.date()
+            for fmt in SUPPORTED_DATETIME_FORMATS
+        )
+
+        parsed = pl.coalesce(parse_exprs)
+        invalid_mask = cleaned.is_not_null() & parsed.is_null()
+
+        invalid_df = df.filter(invalid_mask)
+        if invalid_df.height > 0:
+            invalid_samples = invalid_df[col].head(5).to_list()
+            sample_strs = [str(s) for s in invalid_samples]
+            ctx = f" in {dataset_name}" if dataset_name else ""
+            raise InvalidTemporalValueError(
+                f"Invalid temporal value(s) in column '{col}'{ctx}: {sample_strs}",
+                column=col,
+                invalid_samples=sample_strs,
+                dataset_name=dataset_name,
+            )
+
+        return df.with_columns(parsed.alias(col))
+    except InvalidTemporalValueError:
+        raise
+    except Exception as exc:
+        ctx = f" in {dataset_name}" if dataset_name else ""
+        raise InvalidTemporalValueError(
+            f"Failed to normalize temporal column '{col}'{ctx}: {exc}",
+            column=col,
+            dataset_name=dataset_name,
+        ) from exc
+
+
+def _normalize_scd2_columns(
+    df: pl.DataFrame, *, dataset_name: str | None = None
+) -> pl.DataFrame:
     """Coerce SCD2 metadata columns to the correct types."""
 
-    # effective_from: ensure Date
-    if "effective_from" in df.columns and df["effective_from"].dtype != pl.Date:
-        df = df.with_columns(
-            pl.col("effective_from").cast(pl.Utf8).str.to_date(format="%Y-%m-%d", strict=False)
-        )
+    # effective_from: ensure Date without data loss or silent null conversion
+    if "effective_from" in df.columns:
+        df = _normalize_date_column(df, "effective_from", dataset_name=dataset_name)
 
-    # effective_to: ensure Date (nulls stay null)
-    if "effective_to" in df.columns and df["effective_to"].dtype != pl.Date:
-        df = df.with_columns(
-            pl.col("effective_to").cast(pl.Utf8).str.to_date(format="%Y-%m-%d", strict=False)
-        )
+    # effective_to: ensure Date (nulls stay null) without silent null conversion
+    if "effective_to" in df.columns:
+        df = _normalize_date_column(df, "effective_to", dataset_name=dataset_name)
 
     # is_current: ensure Boolean
     if "is_current" in df.columns and df["is_current"].dtype != pl.Boolean:

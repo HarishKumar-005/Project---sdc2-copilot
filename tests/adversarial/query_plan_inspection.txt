@@ -1,0 +1,59 @@
+================================================================================
+POLARS VERSION: 1.44.1
+================================================================================
+
+--- UNOPTIMIZED JOIN & CLASSIFICATION PLAN ---
+LEFT JOIN:
+LEFT PLAN ON: [col("customer_id")]
+  DF ["customer_id", "name", "city"]; PROJECT */3 COLUMNS
+RIGHT PLAN ON: [col("customer_id")]
+   WITH_COLUMNS:
+   [true.alias("_target_match")] 
+    FILTER col("is_current") == true
+    FROM
+      DF ["customer_id", "name", "city", "effective_from", ...]; PROJECT */6 COLUMNS
+END LEFT JOIN
+
+--- OPTIMIZED JOIN & CLASSIFICATION PLAN ---
+LEFT JOIN:
+LEFT PLAN ON: [col("customer_id")]
+  DF ["customer_id", "name", "city"]; PROJECT */3 COLUMNS
+RIGHT PLAN ON: [col("customer_id")]
+   WITH_COLUMNS:
+   [true.alias("_target_match")] 
+    FILTER col("is_current") == true
+    FROM
+      DF ["customer_id", "name", "city", "effective_from", ...]; PROJECT */6 COLUMNS
+END LEFT JOIN
+
+--- OPTIMIZED DELETED ANTI-JOIN PLAN ---
+ANTI JOIN:
+LEFT PLAN ON: [col("customer_id")]
+  simple π 1/1 ["customer_id"]
+    FILTER col("is_current") == true
+    FROM
+      DF ["customer_id", "name", "city", "effective_from", ...]; PROJECT["customer_id", "is_current"] 2/6 COLUMNS
+RIGHT PLAN ON: [col("customer_id")]
+  DF ["customer_id", "name", "city"]; PROJECT["customer_id"] 1/3 COLUMNS
+END ANTI JOIN
+
+--- OPTIMIZED CHANGED KEYS PLAN ---
+simple π 1/1 ["customer_id"]
+  FILTER (when(col("name").str.strip_chars([null]) == "").then(null.cast(String)).otherwise(col("name").str.strip_chars([null])) !=v when(col("name_target").str.strip_chars([null]) == "").then(null.cast(String)).otherwise(col("name_target").str.strip_chars([null]))) | (when(col("city").str.strip_chars([null]) == "").then(null.cast(String)).otherwise(col("city").str.strip_chars([null])) !=v when(col("city_target").str.strip_chars([null]) == "").then(null.cast(String)).otherwise(col("city_target").str.strip_chars([null])))
+  FROM
+    simple π 5/5 ["customer_id", "name", ... 3 other columns]
+      INNER JOIN:
+      LEFT PLAN ON: [col("customer_id")]
+        DF ["customer_id", "name", "city"]; PROJECT */3 COLUMNS
+      RIGHT PLAN ON: [col("customer_id")]
+        simple π 3/3 ["name", "city", "customer_id"]
+          FILTER col("_target_match").is_not_null()
+          FROM
+            simple π 4/4 ["name", "city", "customer_id", ... 1 other column]
+               WITH_COLUMNS:
+               [true.alias("_target_match")] 
+                simple π 3/3 ["customer_id", "name", "city"]
+                  FILTER col("is_current") == true
+                  FROM
+                    DF ["customer_id", "name", "city", "effective_from", ...]; PROJECT["customer_id", "name", "city", "is_current"] 4/6 COLUMNS
+      END INNER JOIN

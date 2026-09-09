@@ -1,0 +1,1088 @@
+{
+  "metadata": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "os_version": "10.0.26200",
+    "python_version": "3.12.9",
+    "polars_version": "1.44.1",
+    "processor": "Intel64 Family 6 Model 186 Stepping 3, GenuineIntel",
+    "machine": "AMD64",
+    "logical_cpu_cores": 12,
+    "benchmark_timestamp_utc": "2026-09-07T06:20:00.512587+00:00"
+  },
+  "m24_baseline_metadata": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "os_version": "10.0.26200",
+    "python_version": "3.12.9",
+    "polars_version": "1.44.1",
+    "processor": "Intel64 Family 6 Model 186 Stepping 3, GenuineIntel",
+    "machine": "AMD64",
+    "logical_cpu_cores": 12,
+    "benchmark_timestamp_utc": "2026-09-07T05:49:36.665237+00:00"
+  },
+  "benchmarks": {
+    "10000": {
+      "num_rows": 10000,
+      "composite_key": false,
+      "engine": "auto",
+      "repetitions": 5,
+      "counts": {
+        "source_rows": 9500,
+        "target_rows": 10450,
+        "output_rows": 11850,
+        "new": 500,
+        "changed": 900,
+        "unchanged": 8100,
+        "deleted": 500
+      },
+      "timings_sec": {
+        "generate": {
+          "min": 0.0021,
+          "median": 0.0022,
+          "p95": 0.0026,
+          "max": 0.0026,
+          "std_dev": 0.0002
+        },
+        "detect": {
+          "min": 0.007,
+          "median": 0.0072,
+          "p95": 0.0082,
+          "max": 0.0082,
+          "std_dev": 0.0005
+        },
+        "apply": {
+          "min": 0.0029,
+          "median": 0.0032,
+          "p95": 0.0034,
+          "max": 0.0034,
+          "std_dev": 0.0002
+        },
+        "validate": {
+          "min": 0.0022,
+          "median": 0.0026,
+          "p95": 0.0029,
+          "max": 0.0029,
+          "std_dev": 0.0003
+        },
+        "total_detect_apply": {
+          "min": 0.0099,
+          "median": 0.0105,
+          "p95": 0.0114,
+          "max": 0.0114,
+          "std_dev": 0.0006
+        },
+        "end_to_end": {
+          "min": 0.0121,
+          "median": 0.0129,
+          "p95": 0.0143,
+          "max": 0.0143,
+          "std_dev": 0.0008
+        }
+      },
+      "performance_metrics": {
+        "throughput_detect_apply_rows_sec": 952381.0,
+        "throughput_e2e_rows_sec": 775193.8,
+        "seconds_per_million_rows_detect_apply": 1.05,
+        "seconds_per_million_rows_e2e": 1.29
+      },
+      "memory_metrics": {
+        "python_heap_peak_detect_mb": 0.01,
+        "python_heap_peak_apply_mb": 0.01,
+        "python_heap_peak_validate_mb": 0.0,
+        "polars_buffers_source_mb": 0.24,
+        "polars_buffers_target_mb": 0.34,
+        "polars_buffers_output_mb": 0.39,
+        "polars_buffers_total_mb": 0.97,
+        "process_rss_mb": 70.38,
+        "process_peak_working_set_mb": 70.38
+      },
+      "validation_passed": true
+    },
+    "100000": {
+      "num_rows": 100000,
+      "composite_key": false,
+      "engine": "auto",
+      "repetitions": 5,
+      "counts": {
+        "source_rows": 95000,
+        "target_rows": 104500,
+        "output_rows": 118500,
+        "new": 5000,
+        "changed": 9000,
+        "unchanged": 81000,
+        "deleted": 5000
+      },
+      "timings_sec": {
+        "generate": {
+          "min": 0.0087,
+          "median": 0.0095,
+          "p95": 0.0137,
+          "max": 0.0137,
+          "std_dev": 0.0018
+        },
+        "detect": {
+          "min": 0.0317,
+          "median": 0.0327,
+          "p95": 0.0437,
+          "max": 0.0437,
+          "std_dev": 0.0046
+        },
+        "apply": {
+          "min": 0.0083,
+          "median": 0.0088,
+          "p95": 0.0093,
+          "max": 0.0093,
+          "std_dev": 0.0003
+        },
+        "validate": {
+          "min": 0.006,
+          "median": 0.0064,
+          "p95": 0.0072,
+          "max": 0.0072,
+          "std_dev": 0.0004
+        },
+        "total_detect_apply": {
+          "min": 0.04,
+          "median": 0.0414,
+          "p95": 0.0528,
+          "max": 0.0528,
+          "std_dev": 0.0048
+        },
+        "end_to_end": {
+          "min": 0.0468,
+          "median": 0.0475,
+          "p95": 0.06,
+          "max": 0.06,
+          "std_dev": 0.0051
+        }
+      },
+      "performance_metrics": {
+        "throughput_detect_apply_rows_sec": 2415458.9,
+        "throughput_e2e_rows_sec": 2105263.2,
+        "seconds_per_million_rows_detect_apply": 0.414,
+        "seconds_per_million_rows_e2e": 0.475
+      },
+      "memory_metrics": {
+        "python_heap_peak_detect_mb": 0.01,
+        "python_heap_peak_apply_mb": 0.01,
+        "python_heap_peak_validate_mb": 0.0,
+        "polars_buffers_source_mb": 2.55,
+        "polars_buffers_target_mb": 3.64,
+        "polars_buffers_output_mb": 4.15,
+        "polars_buffers_total_mb": 10.35,
+        "process_rss_mb": 252.18,
+        "process_peak_working_set_mb": 252.18
+      },
+      "validation_passed": true
+    },
+    "500000": {
+      "num_rows": 500000,
+      "composite_key": false,
+      "engine": "auto",
+      "repetitions": 5,
+      "counts": {
+        "source_rows": 475000,
+        "target_rows": 522500,
+        "output_rows": 592500,
+        "new": 25000,
+        "changed": 45000,
+        "unchanged": 405000,
+        "deleted": 25000
+      },
+      "timings_sec": {
+        "generate": {
+          "min": 0.0393,
+          "median": 0.0408,
+          "p95": 0.0449,
+          "max": 0.0449,
+          "std_dev": 0.0021
+        },
+        "detect": {
+          "min": 0.1487,
+          "median": 0.1497,
+          "p95": 0.1597,
+          "max": 0.1597,
+          "std_dev": 0.0042
+        },
+        "apply": {
+          "min": 0.0353,
+          "median": 0.0363,
+          "p95": 0.0392,
+          "max": 0.0392,
+          "std_dev": 0.0015
+        },
+        "validate": {
+          "min": 0.0241,
+          "median": 0.0252,
+          "p95": 0.026,
+          "max": 0.026,
+          "std_dev": 0.0007
+        },
+        "total_detect_apply": {
+          "min": 0.1847,
+          "median": 0.1879,
+          "p95": 0.196,
+          "max": 0.196,
+          "std_dev": 0.004
+        },
+        "end_to_end": {
+          "min": 0.2094,
+          "median": 0.213,
+          "p95": 0.2218,
+          "max": 0.2218,
+          "std_dev": 0.0045
+        }
+      },
+      "performance_metrics": {
+        "throughput_detect_apply_rows_sec": 2660989.9,
+        "throughput_e2e_rows_sec": 2347417.8,
+        "seconds_per_million_rows_detect_apply": 0.3758,
+        "seconds_per_million_rows_e2e": 0.426
+      },
+      "memory_metrics": {
+        "python_heap_peak_detect_mb": 0.01,
+        "python_heap_peak_apply_mb": 0.01,
+        "python_heap_peak_validate_mb": 0.0,
+        "polars_buffers_source_mb": 13.58,
+        "polars_buffers_target_mb": 19.09,
+        "polars_buffers_output_mb": 21.77,
+        "polars_buffers_total_mb": 54.43,
+        "process_rss_mb": 546.12,
+        "process_peak_working_set_mb": 576.05
+      },
+      "validation_passed": true
+    },
+    "1000000": {
+      "num_rows": 1000000,
+      "composite_key": false,
+      "engine": "auto",
+      "repetitions": 5,
+      "counts": {
+        "source_rows": 950000,
+        "target_rows": 1045000,
+        "output_rows": 1185000,
+        "new": 50000,
+        "changed": 90000,
+        "unchanged": 810000,
+        "deleted": 50000
+      },
+      "timings_sec": {
+        "generate": {
+          "min": 0.086,
+          "median": 0.1161,
+          "p95": 0.1257,
+          "max": 0.1257,
+          "std_dev": 0.0145
+        },
+        "detect": {
+          "min": 0.301,
+          "median": 0.467,
+          "p95": 0.4902,
+          "max": 0.4902,
+          "std_dev": 0.068
+        },
+        "apply": {
+          "min": 0.0846,
+          "median": 0.0911,
+          "p95": 0.104,
+          "max": 0.104,
+          "std_dev": 0.0076
+        },
+        "validate": {
+          "min": 0.0559,
+          "median": 0.0571,
+          "p95": 0.0653,
+          "max": 0.0653,
+          "std_dev": 0.0034
+        },
+        "total_detect_apply": {
+          "min": 0.3856,
+          "median": 0.5581,
+          "p95": 0.5762,
+          "max": 0.5762,
+          "std_dev": 0.0708
+        },
+        "end_to_end": {
+          "min": 0.4415,
+          "median": 0.6188,
+          "p95": 0.6333,
+          "max": 0.6333,
+          "std_dev": 0.0719
+        }
+      },
+      "performance_metrics": {
+        "throughput_detect_apply_rows_sec": 1791793.6,
+        "throughput_e2e_rows_sec": 1616031.0,
+        "seconds_per_million_rows_detect_apply": 0.5581,
+        "seconds_per_million_rows_e2e": 0.6188
+      },
+      "memory_metrics": {
+        "python_heap_peak_detect_mb": 0.01,
+        "python_heap_peak_apply_mb": 0.01,
+        "python_heap_peak_validate_mb": 0.0,
+        "polars_buffers_source_mb": 27.34,
+        "polars_buffers_target_mb": 38.42,
+        "polars_buffers_output_mb": 43.78,
+        "polars_buffers_total_mb": 109.55,
+        "process_rss_mb": 861.39,
+        "process_peak_working_set_mb": 867.3
+      },
+      "validation_passed": true
+    },
+    "2000000": {
+      "num_rows": 2000000,
+      "composite_key": false,
+      "engine": "auto",
+      "repetitions": 3,
+      "counts": {
+        "source_rows": 1900000,
+        "target_rows": 2090000,
+        "output_rows": 2370000,
+        "new": 100000,
+        "changed": 180000,
+        "unchanged": 1620000,
+        "deleted": 100000
+      },
+      "timings_sec": {
+        "generate": {
+          "min": 0.2296,
+          "median": 0.2317,
+          "p95": 0.2318,
+          "max": 0.2318,
+          "std_dev": 0.001
+        },
+        "detect": {
+          "min": 0.8519,
+          "median": 0.859,
+          "p95": 0.8804,
+          "max": 0.8804,
+          "std_dev": 0.0121
+        },
+        "apply": {
+          "min": 0.1888,
+          "median": 0.1965,
+          "p95": 0.2091,
+          "max": 0.2091,
+          "std_dev": 0.0084
+        },
+        "validate": {
+          "min": 0.1186,
+          "median": 0.1188,
+          "p95": 0.1305,
+          "max": 0.1305,
+          "std_dev": 0.0056
+        },
+        "total_detect_apply": {
+          "min": 1.0408,
+          "median": 1.0555,
+          "p95": 1.0895,
+          "max": 1.0895,
+          "std_dev": 0.0204
+        },
+        "end_to_end": {
+          "min": 1.1596,
+          "median": 1.1741,
+          "p95": 1.22,
+          "max": 1.22,
+          "std_dev": 0.0258
+        }
+      },
+      "performance_metrics": {
+        "throughput_detect_apply_rows_sec": 1894836.6,
+        "throughput_e2e_rows_sec": 1703432.4,
+        "seconds_per_million_rows_detect_apply": 0.5278,
+        "seconds_per_million_rows_e2e": 0.587
+      },
+      "memory_metrics": {
+        "python_heap_peak_detect_mb": 0.01,
+        "python_heap_peak_apply_mb": 0.01,
+        "python_heap_peak_validate_mb": 0.0,
+        "polars_buffers_source_mb": 56.78,
+        "polars_buffers_target_mb": 78.96,
+        "polars_buffers_output_mb": 90.07,
+        "polars_buffers_total_mb": 225.81,
+        "process_rss_mb": 1265.39,
+        "process_peak_working_set_mb": 1306.6
+      },
+      "validation_passed": true
+    },
+    "5000000": {
+      "num_rows": 5000000,
+      "composite_key": false,
+      "engine": "auto",
+      "repetitions": 3,
+      "counts": {
+        "source_rows": 4750000,
+        "target_rows": 5225000,
+        "output_rows": 5925000,
+        "new": 250000,
+        "changed": 450000,
+        "unchanged": 4050000,
+        "deleted": 250000
+      },
+      "timings_sec": {
+        "generate": {
+          "min": 0.6102,
+          "median": 0.6321,
+          "p95": 0.6433,
+          "max": 0.6433,
+          "std_dev": 0.0138
+        },
+        "detect": {
+          "min": 2.0532,
+          "median": 2.0856,
+          "p95": 2.1333,
+          "max": 2.1333,
+          "std_dev": 0.0329
+        },
+        "apply": {
+          "min": 0.5431,
+          "median": 0.5614,
+          "p95": 0.6069,
+          "max": 0.6069,
+          "std_dev": 0.0268
+        },
+        "validate": {
+          "min": 0.298,
+          "median": 0.3036,
+          "p95": 0.3427,
+          "max": 0.3427,
+          "std_dev": 0.0199
+        },
+        "total_detect_apply": {
+          "min": 2.5963,
+          "median": 2.647,
+          "p95": 2.7402,
+          "max": 2.7402,
+          "std_dev": 0.0596
+        },
+        "end_to_end": {
+          "min": 2.9389,
+          "median": 2.945,
+          "p95": 3.0437,
+          "max": 3.0437,
+          "std_dev": 0.048
+        }
+      },
+      "performance_metrics": {
+        "throughput_detect_apply_rows_sec": 1888930.9,
+        "throughput_e2e_rows_sec": 1697792.9,
+        "seconds_per_million_rows_detect_apply": 0.5294,
+        "seconds_per_million_rows_e2e": 0.589
+      },
+      "memory_metrics": {
+        "python_heap_peak_detect_mb": 0.01,
+        "python_heap_peak_apply_mb": 0.01,
+        "python_heap_peak_validate_mb": 0.0,
+        "polars_buffers_source_mb": 144.82,
+        "polars_buffers_target_mb": 200.89,
+        "polars_buffers_output_mb": 228.96,
+        "polars_buffers_total_mb": 574.67,
+        "process_rss_mb": 2437.91,
+        "process_peak_working_set_mb": 2437.91
+      },
+      "validation_passed": true
+    },
+    "100000_composite": {
+      "num_rows": 100000,
+      "composite_key": true,
+      "engine": "auto",
+      "repetitions": 5,
+      "counts": {
+        "source_rows": 95000,
+        "target_rows": 104500,
+        "output_rows": 118500,
+        "new": 5000,
+        "changed": 9000,
+        "unchanged": 81000,
+        "deleted": 5000
+      },
+      "timings_sec": {
+        "generate": {
+          "min": 0.0224,
+          "median": 0.0226,
+          "p95": 0.1512,
+          "max": 0.1512,
+          "std_dev": 0.0499
+        },
+        "detect": {
+          "min": 0.0586,
+          "median": 0.0625,
+          "p95": 0.0908,
+          "max": 0.0908,
+          "std_dev": 0.0119
+        },
+        "apply": {
+          "min": 0.0244,
+          "median": 0.0312,
+          "p95": 0.0357,
+          "max": 0.0357,
+          "std_dev": 0.0043
+        },
+        "validate": {
+          "min": 0.0109,
+          "median": 0.0141,
+          "p95": 0.0164,
+          "max": 0.0164,
+          "std_dev": 0.0021
+        },
+        "total_detect_apply": {
+          "min": 0.0869,
+          "median": 0.0899,
+          "p95": 0.1258,
+          "max": 0.1258,
+          "std_dev": 0.0145
+        },
+        "end_to_end": {
+          "min": 0.0978,
+          "median": 0.1051,
+          "p95": 0.1421,
+          "max": 0.1421,
+          "std_dev": 0.0156
+        }
+      },
+      "performance_metrics": {
+        "throughput_detect_apply_rows_sec": 1112347.1,
+        "throughput_e2e_rows_sec": 951474.8,
+        "seconds_per_million_rows_detect_apply": 0.899,
+        "seconds_per_million_rows_e2e": 1.051
+      },
+      "memory_metrics": {
+        "python_heap_peak_detect_mb": 0.01,
+        "python_heap_peak_apply_mb": 0.01,
+        "python_heap_peak_validate_mb": 0.0,
+        "polars_buffers_source_mb": 3.01,
+        "polars_buffers_target_mb": 4.14,
+        "polars_buffers_output_mb": 4.72,
+        "polars_buffers_total_mb": 11.86,
+        "process_rss_mb": 554.38,
+        "process_peak_working_set_mb": 2437.91
+      },
+      "validation_passed": true
+    },
+    "1000000_composite": {
+      "num_rows": 1000000,
+      "composite_key": true,
+      "engine": "auto",
+      "repetitions": 3,
+      "counts": {
+        "source_rows": 950000,
+        "target_rows": 1045000,
+        "output_rows": 1185000,
+        "new": 50000,
+        "changed": 90000,
+        "unchanged": 810000,
+        "deleted": 50000
+      },
+      "timings_sec": {
+        "generate": {
+          "min": 0.1907,
+          "median": 0.2095,
+          "p95": 0.2304,
+          "max": 0.2304,
+          "std_dev": 0.0162
+        },
+        "detect": {
+          "min": 0.595,
+          "median": 0.632,
+          "p95": 0.6368,
+          "max": 0.6368,
+          "std_dev": 0.0187
+        },
+        "apply": {
+          "min": 0.2766,
+          "median": 0.2801,
+          "p95": 0.2881,
+          "max": 0.2881,
+          "std_dev": 0.0048
+        },
+        "validate": {
+          "min": 0.0853,
+          "median": 0.1017,
+          "p95": 0.1036,
+          "max": 0.1036,
+          "std_dev": 0.0082
+        },
+        "total_detect_apply": {
+          "min": 0.8716,
+          "median": 0.9169,
+          "p95": 0.9201,
+          "max": 0.9201,
+          "std_dev": 0.0221
+        },
+        "end_to_end": {
+          "min": 0.9733,
+          "median": 1.0054,
+          "p95": 1.0204,
+          "max": 1.0204,
+          "std_dev": 0.0196
+        }
+      },
+      "performance_metrics": {
+        "throughput_detect_apply_rows_sec": 1090631.5,
+        "throughput_e2e_rows_sec": 994629.0,
+        "seconds_per_million_rows_detect_apply": 0.9169,
+        "seconds_per_million_rows_e2e": 1.0054
+      },
+      "memory_metrics": {
+        "python_heap_peak_detect_mb": 0.01,
+        "python_heap_peak_apply_mb": 0.01,
+        "python_heap_peak_validate_mb": 0.0,
+        "polars_buffers_source_mb": 31.87,
+        "polars_buffers_target_mb": 43.4,
+        "polars_buffers_output_mb": 49.44,
+        "polars_buffers_total_mb": 124.71,
+        "process_rss_mb": 1177.07,
+        "process_peak_working_set_mb": 2437.91
+      },
+      "validation_passed": true
+    },
+    "100000_in_memory": {
+      "num_rows": 100000,
+      "composite_key": false,
+      "engine": "in-memory",
+      "repetitions": 5,
+      "counts": {
+        "source_rows": 95000,
+        "target_rows": 104500,
+        "output_rows": 118500,
+        "new": 5000,
+        "changed": 9000,
+        "unchanged": 81000,
+        "deleted": 5000
+      },
+      "timings_sec": {
+        "generate": {
+          "min": 0.0121,
+          "median": 0.0132,
+          "p95": 0.0194,
+          "max": 0.0194,
+          "std_dev": 0.0027
+        },
+        "detect": {
+          "min": 0.0443,
+          "median": 0.0532,
+          "p95": 0.135,
+          "max": 0.135,
+          "std_dev": 0.0343
+        },
+        "apply": {
+          "min": 0.0111,
+          "median": 0.0121,
+          "p95": 0.0131,
+          "max": 0.0131,
+          "std_dev": 0.0007
+        },
+        "validate": {
+          "min": 0.0081,
+          "median": 0.0093,
+          "p95": 0.0114,
+          "max": 0.0114,
+          "std_dev": 0.0011
+        },
+        "total_detect_apply": {
+          "min": 0.0554,
+          "median": 0.0662,
+          "p95": 0.1465,
+          "max": 0.1465,
+          "std_dev": 0.0341
+        },
+        "end_to_end": {
+          "min": 0.0644,
+          "median": 0.0776,
+          "p95": 0.1546,
+          "max": 0.1546,
+          "std_dev": 0.0335
+        }
+      },
+      "performance_metrics": {
+        "throughput_detect_apply_rows_sec": 1510574.0,
+        "throughput_e2e_rows_sec": 1288659.8,
+        "seconds_per_million_rows_detect_apply": 0.662,
+        "seconds_per_million_rows_e2e": 0.776
+      },
+      "memory_metrics": {
+        "python_heap_peak_detect_mb": 0.01,
+        "python_heap_peak_apply_mb": 0.01,
+        "python_heap_peak_validate_mb": 0.0,
+        "polars_buffers_source_mb": 2.55,
+        "polars_buffers_target_mb": 3.64,
+        "polars_buffers_output_mb": 4.15,
+        "polars_buffers_total_mb": 10.35,
+        "process_rss_mb": 538.4,
+        "process_peak_working_set_mb": 2437.91
+      },
+      "validation_passed": true
+    },
+    "100000_streaming": {
+      "num_rows": 100000,
+      "composite_key": false,
+      "engine": "streaming",
+      "repetitions": 5,
+      "counts": {
+        "source_rows": 95000,
+        "target_rows": 104500,
+        "output_rows": 118500,
+        "new": 5000,
+        "changed": 9000,
+        "unchanged": 81000,
+        "deleted": 5000
+      },
+      "timings_sec": {
+        "generate": {
+          "min": 0.0125,
+          "median": 0.0155,
+          "p95": 0.0219,
+          "max": 0.0219,
+          "std_dev": 0.0033
+        },
+        "detect": {
+          "min": 0.0475,
+          "median": 0.0629,
+          "p95": 0.0718,
+          "max": 0.0718,
+          "std_dev": 0.0085
+        },
+        "apply": {
+          "min": 0.0197,
+          "median": 0.0228,
+          "p95": 0.0244,
+          "max": 0.0244,
+          "std_dev": 0.0015
+        },
+        "validate": {
+          "min": 0.013,
+          "median": 0.0148,
+          "p95": 0.0155,
+          "max": 0.0155,
+          "std_dev": 0.0009
+        },
+        "total_detect_apply": {
+          "min": 0.0718,
+          "median": 0.0857,
+          "p95": 0.0951,
+          "max": 0.0951,
+          "std_dev": 0.0078
+        },
+        "end_to_end": {
+          "min": 0.0873,
+          "median": 0.1001,
+          "p95": 0.1096,
+          "max": 0.1096,
+          "std_dev": 0.0074
+        }
+      },
+      "performance_metrics": {
+        "throughput_detect_apply_rows_sec": 1166861.1,
+        "throughput_e2e_rows_sec": 999001.0,
+        "seconds_per_million_rows_detect_apply": 0.857,
+        "seconds_per_million_rows_e2e": 1.001
+      },
+      "memory_metrics": {
+        "python_heap_peak_detect_mb": 0.01,
+        "python_heap_peak_apply_mb": 0.01,
+        "python_heap_peak_validate_mb": 0.0,
+        "polars_buffers_source_mb": 2.55,
+        "polars_buffers_target_mb": 3.64,
+        "polars_buffers_output_mb": 4.15,
+        "polars_buffers_total_mb": 10.35,
+        "process_rss_mb": 603.57,
+        "process_peak_working_set_mb": 2437.91
+      },
+      "validation_passed": true
+    },
+    "1000000_in_memory": {
+      "num_rows": 1000000,
+      "composite_key": false,
+      "engine": "in-memory",
+      "repetitions": 3,
+      "counts": {
+        "source_rows": 950000,
+        "target_rows": 1045000,
+        "output_rows": 1185000,
+        "new": 50000,
+        "changed": 90000,
+        "unchanged": 810000,
+        "deleted": 50000
+      },
+      "timings_sec": {
+        "generate": {
+          "min": 0.107,
+          "median": 0.113,
+          "p95": 0.1257,
+          "max": 0.1257,
+          "std_dev": 0.0078
+        },
+        "detect": {
+          "min": 0.4312,
+          "median": 0.4598,
+          "p95": 0.4875,
+          "max": 0.4875,
+          "std_dev": 0.023
+        },
+        "apply": {
+          "min": 0.1009,
+          "median": 0.1012,
+          "p95": 0.1043,
+          "max": 0.1043,
+          "std_dev": 0.0015
+        },
+        "validate": {
+          "min": 0.0615,
+          "median": 0.0626,
+          "p95": 0.0666,
+          "max": 0.0666,
+          "std_dev": 0.0022
+        },
+        "total_detect_apply": {
+          "min": 0.5321,
+          "median": 0.5641,
+          "p95": 0.5886,
+          "max": 0.5886,
+          "std_dev": 0.0231
+        },
+        "end_to_end": {
+          "min": 0.5936,
+          "median": 0.6307,
+          "p95": 0.6512,
+          "max": 0.6512,
+          "std_dev": 0.0238
+        }
+      },
+      "performance_metrics": {
+        "throughput_detect_apply_rows_sec": 1772735.3,
+        "throughput_e2e_rows_sec": 1585539.9,
+        "seconds_per_million_rows_detect_apply": 0.5641,
+        "seconds_per_million_rows_e2e": 0.6307
+      },
+      "memory_metrics": {
+        "python_heap_peak_detect_mb": 0.01,
+        "python_heap_peak_apply_mb": 0.01,
+        "python_heap_peak_validate_mb": 0.0,
+        "polars_buffers_source_mb": 27.34,
+        "polars_buffers_target_mb": 38.42,
+        "polars_buffers_output_mb": 43.78,
+        "polars_buffers_total_mb": 109.55,
+        "process_rss_mb": 1149.27,
+        "process_peak_working_set_mb": 2437.91
+      },
+      "validation_passed": true
+    },
+    "1000000_streaming": {
+      "num_rows": 1000000,
+      "composite_key": false,
+      "engine": "streaming",
+      "repetitions": 3,
+      "counts": {
+        "source_rows": 950000,
+        "target_rows": 1045000,
+        "output_rows": 1185000,
+        "new": 50000,
+        "changed": 90000,
+        "unchanged": 810000,
+        "deleted": 50000
+      },
+      "timings_sec": {
+        "generate": {
+          "min": 0.1222,
+          "median": 0.1234,
+          "p95": 0.1244,
+          "max": 0.1244,
+          "std_dev": 0.0009
+        },
+        "detect": {
+          "min": 0.4359,
+          "median": 0.4667,
+          "p95": 0.4725,
+          "max": 0.4725,
+          "std_dev": 0.0161
+        },
+        "apply": {
+          "min": 0.0975,
+          "median": 0.1116,
+          "p95": 0.126,
+          "max": 0.126,
+          "std_dev": 0.0116
+        },
+        "validate": {
+          "min": 0.0593,
+          "median": 0.0647,
+          "p95": 0.0663,
+          "max": 0.0663,
+          "std_dev": 0.003
+        },
+        "total_detect_apply": {
+          "min": 0.5476,
+          "median": 0.5643,
+          "p95": 0.5985,
+          "max": 0.5985,
+          "std_dev": 0.0212
+        },
+        "end_to_end": {
+          "min": 0.6123,
+          "median": 0.6236,
+          "p95": 0.6647,
+          "max": 0.6647,
+          "std_dev": 0.0225
+        }
+      },
+      "performance_metrics": {
+        "throughput_detect_apply_rows_sec": 1772107.0,
+        "throughput_e2e_rows_sec": 1603592.0,
+        "seconds_per_million_rows_detect_apply": 0.5643,
+        "seconds_per_million_rows_e2e": 0.6236
+      },
+      "memory_metrics": {
+        "python_heap_peak_detect_mb": 0.01,
+        "python_heap_peak_apply_mb": 0.01,
+        "python_heap_peak_validate_mb": 0.0,
+        "polars_buffers_source_mb": 27.34,
+        "polars_buffers_target_mb": 38.42,
+        "polars_buffers_output_mb": 43.78,
+        "polars_buffers_total_mb": 109.55,
+        "process_rss_mb": 1270.91,
+        "process_peak_working_set_mb": 2437.91
+      },
+      "validation_passed": true
+    }
+  },
+  "scalability_analysis": {
+    "100000": {
+      "num_rows": 100000,
+      "median_time_sec": 0.0414,
+      "expected_strictly_linear_sec": 0.0414,
+      "scaling_ratio": 1.0,
+      "throughput_rows_sec": 2415458.9,
+      "sec_per_million_rows": 0.414
+    },
+    "500000": {
+      "num_rows": 500000,
+      "median_time_sec": 0.1879,
+      "expected_strictly_linear_sec": 0.207,
+      "scaling_ratio": 0.908,
+      "throughput_rows_sec": 2660989.9,
+      "sec_per_million_rows": 0.3758
+    },
+    "1000000": {
+      "num_rows": 1000000,
+      "median_time_sec": 0.5581,
+      "expected_strictly_linear_sec": 0.414,
+      "scaling_ratio": 1.348,
+      "throughput_rows_sec": 1791793.6,
+      "sec_per_million_rows": 0.5581
+    },
+    "2000000": {
+      "num_rows": 2000000,
+      "median_time_sec": 1.0555,
+      "expected_strictly_linear_sec": 0.828,
+      "scaling_ratio": 1.275,
+      "throughput_rows_sec": 1894836.6,
+      "sec_per_million_rows": 0.5278
+    },
+    "5000000": {
+      "num_rows": 5000000,
+      "median_time_sec": 2.647,
+      "expected_strictly_linear_sec": 2.07,
+      "scaling_ratio": 1.279,
+      "throughput_rows_sec": 1888930.9,
+      "sec_per_million_rows": 0.5294
+    }
+  },
+  "validation_speedup_comparison": {
+    "10000": {
+      "m24_validation_sec": 0.0212,
+      "m25_validation_sec": 0.0026,
+      "validation_speedup_x": 8.15,
+      "m24_end_to_end_sec": 0.0312,
+      "m25_end_to_end_sec": 0.0129,
+      "end_to_end_speedup_x": 2.42
+    },
+    "100000": {
+      "m24_validation_sec": 0.1782,
+      "m25_validation_sec": 0.0064,
+      "validation_speedup_x": 27.84,
+      "m24_end_to_end_sec": 0.2237,
+      "m25_end_to_end_sec": 0.0475,
+      "end_to_end_speedup_x": 4.71
+    },
+    "500000": {
+      "m24_validation_sec": 1.8443,
+      "m25_validation_sec": 0.0252,
+      "validation_speedup_x": 73.19,
+      "m24_end_to_end_sec": 2.125,
+      "m25_end_to_end_sec": 0.213,
+      "end_to_end_speedup_x": 9.98
+    },
+    "1000000": {
+      "m24_validation_sec": 3.9436,
+      "m25_validation_sec": 0.0571,
+      "validation_speedup_x": 69.06,
+      "m24_end_to_end_sec": 4.5241,
+      "m25_end_to_end_sec": 0.6188,
+      "end_to_end_speedup_x": 7.31
+    },
+    "2000000": {
+      "m24_validation_sec": 6.5468,
+      "m25_validation_sec": 0.1188,
+      "validation_speedup_x": 55.11,
+      "m24_end_to_end_sec": 7.588,
+      "m25_end_to_end_sec": 1.1741,
+      "end_to_end_speedup_x": 6.46
+    },
+    "5000000": {
+      "m24_validation_sec": 19.4714,
+      "m25_validation_sec": 0.3036,
+      "validation_speedup_x": 64.14,
+      "m24_end_to_end_sec": 22.458,
+      "m25_end_to_end_sec": 2.945,
+      "end_to_end_speedup_x": 7.63
+    },
+    "100000_composite": {
+      "m24_validation_sec": 0.4812,
+      "m25_validation_sec": 0.0141,
+      "validation_speedup_x": 34.13,
+      "m24_end_to_end_sec": 0.5942,
+      "m25_end_to_end_sec": 0.1051,
+      "end_to_end_speedup_x": 5.65
+    },
+    "1000000_composite": {
+      "m24_validation_sec": 4.7139,
+      "m25_validation_sec": 0.1017,
+      "validation_speedup_x": 46.35,
+      "m24_end_to_end_sec": 5.5818,
+      "m25_end_to_end_sec": 1.0054,
+      "end_to_end_speedup_x": 5.55
+    },
+    "100000_in_memory": {
+      "m24_validation_sec": 0.422,
+      "m25_validation_sec": 0.0093,
+      "validation_speedup_x": 45.38,
+      "m24_end_to_end_sec": 0.4878,
+      "m25_end_to_end_sec": 0.0776,
+      "end_to_end_speedup_x": 6.29
+    },
+    "100000_streaming": {
+      "m24_validation_sec": 0.4525,
+      "m25_validation_sec": 0.0148,
+      "validation_speedup_x": 30.57,
+      "m24_end_to_end_sec": 0.5268,
+      "m25_end_to_end_sec": 0.1001,
+      "end_to_end_speedup_x": 5.26
+    },
+    "1000000_in_memory": {
+      "m24_validation_sec": 4.0904,
+      "m25_validation_sec": 0.0626,
+      "validation_speedup_x": 65.34,
+      "m24_end_to_end_sec": 4.6988,
+      "m25_end_to_end_sec": 0.6307,
+      "end_to_end_speedup_x": 7.45
+    },
+    "1000000_streaming": {
+      "m24_validation_sec": 3.8988,
+      "m25_validation_sec": 0.0647,
+      "validation_speedup_x": 60.26,
+      "m24_end_to_end_sec": 4.4393,
+      "m25_end_to_end_sec": 0.6236,
+      "end_to_end_speedup_x": 7.12
+    }
+  }
+}

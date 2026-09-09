@@ -12,6 +12,7 @@ from datetime import date, timedelta
 from unittest.mock import MagicMock, patch
 
 from src.scd2_copilot.detect_changes import detect_changes
+from src.scd2_copilot.exceptions import DuplicateBusinessKeyError
 from src.scd2_copilot.transform_scd2 import apply_scd2
 from src.scd2_copilot.validate import validate_scd2
 from src.scd2_copilot.explain import explain_changes, ExplainResult
@@ -26,10 +27,10 @@ from src.scd2_copilot.providers.template import TemplateProvider
 # ── 1. DUPLICATE SOURCE KEYS ───────────────────────────
 
 def test_duplicate_source_keys():
-    """Verify change detection when a key appears multiple times in source."""
+    """Verify change detection rejects duplicate business keys in source."""
     source = pl.DataFrame({
         "id": [101, 101],
-        "name": ["Alice", "Bob"]  # Bob is second, should win or override
+        "name": ["Alice", "Bob"]
     })
     target = pl.DataFrame({
         "id": [101],
@@ -39,13 +40,13 @@ def test_duplicate_source_keys():
         "is_current": [True]
     })
     
-    # Run change detection
-    report = detect_changes(source, target, ["id"], ["name"], date(2026, 6, 8))
+    # Run change detection and verify it fails deterministically
+    with pytest.raises(DuplicateBusinessKeyError) as exc_info:
+        detect_changes(source, target, ["id"], ["name"], date(2026, 6, 8))
     
-    # We expect 2 changed records corresponding to both source updates processed sequentially
-    assert len(report.changed) == 2
-    assert report.changed[0].field_changes[0].new_value == "Alice"
-    assert report.changed[1].field_changes[0].new_value == "Bob"
+    assert exc_info.value.dataset_name == "source"
+    assert exc_info.value.duplicate_count == 1
+    assert "id=101" in str(exc_info.value)
 
 
 # ── 2. DUPLICATE CURRENT TARGET RECORDS ─────────────────
@@ -331,8 +332,9 @@ def test_massive_change_volume():
 
 # ── 16. API FAILURE SIMULATION & FALLBACK CHAIN ────────
 
+@patch("src.scd2_copilot.providers.gemini.time.sleep")
 @patch("google.genai.Client")
-def test_api_failure_simulation(mock_genai_client):
+def test_api_failure_simulation(mock_genai_client, mock_sleep):
     """Simulate API rate limit (429) & timeout (500) and verify fallback to Template."""
     # Configure Gemini client mock to raise rate limit exception
     mock_instance = MagicMock()
@@ -360,6 +362,11 @@ def test_api_failure_simulation(mock_genai_client):
     assert len(result.explanations) == 1
     assert result.provider_used == "template"  # Successfully fell back to template!
     assert "failed" in result.warnings[0].lower()
+
+    # Verify retry backoff sleep was invoked without stalling real time
+    assert mock_sleep.called
+    assert mock_sleep.call_count == 8
+    assert [c.args[0] for c in mock_sleep.call_args_list] == [3, 6] * 4
     
     # Verify metrics
     assert result.metrics is not None

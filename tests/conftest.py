@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from datetime import date
 from pathlib import Path
@@ -9,10 +10,33 @@ from pathlib import Path
 import polars as pl
 import pytest
 
+# Optimize Prefect for fast local test execution (disable telemetry and network latencies)
+os.environ.setdefault("PREFECT_SERVER_ANALYTICS_ENABLED", "False")
+os.environ.setdefault("PREFECT_API_ENABLE_HTTP2", "False")
+os.environ.setdefault("PREFECT_LOGGING_TO_API_ENABLED", "False")
+os.environ.setdefault("PREFECT_SERVER_DATABASE_TIMEOUT", "30.0")
+
 # Ensure src is importable
 _project_root = Path(__file__).resolve().parent.parent
 if str(_project_root) not in sys.path:
     sys.path.insert(0, str(_project_root))
+
+
+@pytest.fixture(autouse=True)
+def _isolate_test_runs(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Ensure tests run against an isolated runs directory and isolated Prefect database."""
+    test_runs_dir = tmp_path / "test_runs"
+    test_runs_dir.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setenv("RUNS_DIRECTORY", str(test_runs_dir))
+
+    test_prefect_home = tmp_path / "prefect_home"
+    test_prefect_home.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setenv("PREFECT_HOME", str(test_prefect_home))
+
+    # Remove PREFECT_API_URL so tests use ephemeral mode instead of
+    # connecting to the production local server on port 4200.
+    # deployment.py sets this at module level for production use.
+    monkeypatch.delenv("PREFECT_API_URL", raising=False)
 
 
 @pytest.fixture
@@ -67,3 +91,20 @@ def tracked_columns() -> list[str]:
 @pytest.fixture
 def processing_date() -> date:
     return date(2026, 6, 8)
+
+
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+    """Deselect benchmark tests by default unless '-m benchmark' is explicitly specified."""
+    markexpr = config.getoption("markexpr") or ""
+    if "benchmark" not in markexpr:
+        selected: list[pytest.Item] = []
+        deselected: list[pytest.Item] = []
+        for item in items:
+            if "benchmark" in item.keywords:
+                deselected.append(item)
+            else:
+                selected.append(item)
+        if deselected:
+            config.hook.pytest_deselected(items=deselected)
+            items[:] = selected
+

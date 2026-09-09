@@ -1,0 +1,72 @@
+{
+  "100000": {
+    "num_rows": 100000,
+    "output_rows": 118500,
+    "stage_1_schema_sec": 1.9e-05,
+    "stage_2_null_key_sec": 0.001092,
+    "stage_3_duplicate_key_sec": 0.003961,
+    "stage_4_current_row_flag_sec": 0.00066,
+    "stage_5_date_consistency_sec": 0.000318,
+    "stage_6_overlap_sec": 0.180885,
+    "stage_7_report_construction_sec": 1.4e-05,
+    "sum_of_stages_sec": 0.18695,
+    "full_validate_scd2_sec": 0.18185,
+    "overlap_pct_of_total": 99.47
+  },
+  "500000": {
+    "num_rows": 500000,
+    "output_rows": 592500,
+    "stage_1_schema_sec": 2.1e-05,
+    "stage_2_null_key_sec": 0.000344,
+    "stage_3_duplicate_key_sec": 0.011813,
+    "stage_4_current_row_flag_sec": 0.000608,
+    "stage_5_date_consistency_sec": 0.000526,
+    "stage_6_overlap_sec": 0.932514,
+    "stage_7_report_construction_sec": 1.6e-05,
+    "sum_of_stages_sec": 0.945843,
+    "full_validate_scd2_sec": 0.946512,
+    "overlap_pct_of_total": 98.52
+  },
+  "1000000": {
+    "num_rows": 1000000,
+    "output_rows": 1185000,
+    "stage_1_schema_sec": 3e-05,
+    "stage_2_null_key_sec": 0.000487,
+    "stage_3_duplicate_key_sec": 0.029438,
+    "stage_4_current_row_flag_sec": 0.000965,
+    "stage_5_date_consistency_sec": 0.000797,
+    "stage_6_overlap_sec": 2.834745,
+    "stage_7_report_construction_sec": 1.1e-05,
+    "sum_of_stages_sec": 2.866473,
+    "full_validate_scd2_sec": 3.332294,
+    "overlap_pct_of_total": 85.07
+  },
+  "2000000": {
+    "num_rows": 2000000,
+    "output_rows": 2370000,
+    "stage_1_schema_sec": 2.8e-05,
+    "stage_2_null_key_sec": 0.000566,
+    "stage_3_duplicate_key_sec": 0.051931,
+    "stage_4_current_row_flag_sec": 0.001216,
+    "stage_5_date_consistency_sec": 0.001075,
+    "stage_6_overlap_sec": 6.609315,
+    "stage_7_report_construction_sec": 1.5e-05,
+    "sum_of_stages_sec": 6.664146,
+    "full_validate_scd2_sec": 7.214292,
+    "overlap_pct_of_total": 91.61
+  },
+  "5000000": {
+    "num_rows": 5000000,
+    "output_rows": 5925000,
+    "stage_1_schema_sec": 4.2e-05,
+    "stage_2_null_key_sec": 0.000581,
+    "stage_3_duplicate_key_sec": 0.147391,
+    "stage_4_current_row_flag_sec": 0.001557,
+    "stage_5_date_consistency_sec": 0.002269,
+    "stage_6_overlap_sec": 16.971725,
+    "stage_7_report_construction_sec": 1.2e-05,
+    "sum_of_stages_sec": 17.123578,
+    "full_validate_scd2_sec": 16.412798,
+    "overlap_pct_of_total": 103.41
+  }
+}

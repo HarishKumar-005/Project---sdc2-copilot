@@ -18,6 +18,7 @@ import polars as pl
 import pytest
 
 from src.scd2_copilot.detect_changes import detect_changes, _compare_fields
+from src.scd2_copilot.exceptions import DuplicateBusinessKeyError
 from src.scd2_copilot.explain import explain_changes, ExplainResult, get_provider
 from src.scd2_copilot.ingestion import load_csv, validate_csv_columns, SCD2_META_COLUMNS
 from src.scd2_copilot.models import (
@@ -89,18 +90,17 @@ class TestEdgeCaseTorture:
     # ── Duplicate Keys ─────────────────────────────────
 
     def test_duplicate_business_keys_in_source(self):
-        """Source has duplicate business keys — last one wins in detection."""
+        """Source has duplicate business keys — fails deterministically."""
         source = pl.DataFrame({"id": [1, 1], "name": ["Alice", "Bob"]})
         target = pl.DataFrame({
             "id": [1], "name": ["X"],
             "effective_from": [date(2026, 6, 7)],
             "effective_to": [None], "is_current": [True],
         })
-        # Should not crash — the detection processes rows sequentially
-        report = detect_changes(source, target, ["id"], ["name"], date(2026, 6, 8))
-        # Second row for id=1 overwrites the first in source_keys set
-        # but the last change record added wins
-        assert report.total >= 1  # At least one change detected
+        with pytest.raises(DuplicateBusinessKeyError) as exc_info:
+            detect_changes(source, target, ["id"], ["name"], date(2026, 6, 8))
+        assert exc_info.value.dataset_name == "source"
+        assert exc_info.value.duplicate_count == 1
 
     def test_duplicate_current_rows_in_target(self):
         """Target has duplicate current rows — detected by validation."""
@@ -443,6 +443,7 @@ class TestCompositeKeys:
 # PHASE 5: PERFORMANCE BENCHMARKS
 # ============================================================================
 
+@pytest.mark.benchmark
 class TestPerformanceBenchmarks:
     """Measure runtime at various dataset sizes."""
 

@@ -1,6 +1,5 @@
 # ── Core data engine ──────────────────────────────────
-polars>=1.40.0
-duckdb>=1.5.0
+polars>=1.44.1,<2.0.0
 pandas>=2.0.0
 pyarrow>=17.0.0
 

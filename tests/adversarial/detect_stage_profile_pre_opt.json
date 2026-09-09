@@ -1,0 +1,154 @@
+{
+  "10000": {
+    "num_rows": 10000,
+    "total_wall_time_sec": 0.1257,
+    "stage_timings_sec": {
+      "1_input_validation": 0.0,
+      "2_business_key_validation": 0.0027,
+      "3_active_target_extraction": 0.0004,
+      "4_normalization_expressions": 0.0005,
+      "5_left_join": 0.0013,
+      "6_field_comparison_evaluation": 0.0,
+      "7_classification_filtering": 0.004,
+      "8_deleted_anti_join": 0.0007,
+      "9_key_dataframes_attachment": 0.0003,
+      "10_changerecord_materialization": 0.0733,
+      "11_field_change_materialization": 0.0406,
+      "12_sorting_canonicalization": 0.0
+    },
+    "stage_percentages": {
+      "1_input_validation": 0.0,
+      "2_business_key_validation": 2.12,
+      "3_active_target_extraction": 0.33,
+      "4_normalization_expressions": 0.36,
+      "5_left_join": 1.0,
+      "6_field_comparison_evaluation": 0.03,
+      "7_classification_filtering": 3.16,
+      "8_deleted_anti_join": 0.55,
+      "9_key_dataframes_attachment": 0.22,
+      "10_changerecord_materialization": 58.34,
+      "11_field_change_materialization": 32.3,
+      "12_sorting_canonicalization": 0.0
+    },
+    "memory_metrics": {
+      "polars_buffers_mb": 1.53,
+      "python_heap_tracemalloc_mb": 4.2,
+      "process_rss_mb": 57.63,
+      "process_peak_working_set_mb": 65.33
+    }
+  },
+  "100000": {
+    "num_rows": 100000,
+    "total_wall_time_sec": 1.2559,
+    "stage_timings_sec": {
+      "1_input_validation": 0.0,
+      "2_business_key_validation": 0.0054,
+      "3_active_target_extraction": 0.0004,
+      "4_normalization_expressions": 0.0003,
+      "5_left_join": 0.0038,
+      "6_field_comparison_evaluation": 0.0001,
+      "7_classification_filtering": 0.0252,
+      "8_deleted_anti_join": 0.0014,
+      "9_key_dataframes_attachment": 0.0003,
+      "10_changerecord_materialization": 0.8348,
+      "11_field_change_materialization": 0.376,
+      "12_sorting_canonicalization": 0.0
+    },
+    "stage_percentages": {
+      "1_input_validation": 0.0,
+      "2_business_key_validation": 0.43,
+      "3_active_target_extraction": 0.03,
+      "4_normalization_expressions": 0.03,
+      "5_left_join": 0.3,
+      "6_field_comparison_evaluation": 0.01,
+      "7_classification_filtering": 2.01,
+      "8_deleted_anti_join": 0.11,
+      "9_key_dataframes_attachment": 0.02,
+      "10_changerecord_materialization": 66.47,
+      "11_field_change_materialization": 29.94,
+      "12_sorting_canonicalization": 0.0
+    },
+    "memory_metrics": {
+      "polars_buffers_mb": 16.4,
+      "python_heap_tracemalloc_mb": 40.37,
+      "process_rss_mb": 148.04,
+      "process_peak_working_set_mb": 219.16
+    }
+  },
+  "500000": {
+    "num_rows": 500000,
+    "total_wall_time_sec": 10.6998,
+    "stage_timings_sec": {
+      "1_input_validation": 0.0,
+      "2_business_key_validation": 0.0198,
+      "3_active_target_extraction": 0.0006,
+      "4_normalization_expressions": 0.0005,
+      "5_left_join": 0.0116,
+      "6_field_comparison_evaluation": 0.0001,
+      "7_classification_filtering": 0.1195,
+      "8_deleted_anti_join": 0.0047,
+      "9_key_dataframes_attachment": 0.0005,
+      "10_changerecord_materialization": 6.897,
+      "11_field_change_materialization": 3.5497,
+      "12_sorting_canonicalization": 0.0
+    },
+    "stage_percentages": {
+      "1_input_validation": 0.0,
+      "2_business_key_validation": 0.18,
+      "3_active_target_extraction": 0.01,
+      "4_normalization_expressions": 0.0,
+      "5_left_join": 0.11,
+      "6_field_comparison_evaluation": 0.0,
+      "7_classification_filtering": 1.12,
+      "8_deleted_anti_join": 0.04,
+      "9_key_dataframes_attachment": 0.0,
+      "10_changerecord_materialization": 64.46,
+      "11_field_change_materialization": 33.18,
+      "12_sorting_canonicalization": 0.0
+    },
+    "memory_metrics": {
+      "polars_buffers_mb": 86.87,
+      "python_heap_tracemalloc_mb": 201.59,
+      "process_rss_mb": 472.54,
+      "process_peak_working_set_mb": 842.64
+    }
+  },
+  "1000000": {
+    "num_rows": 1000000,
+    "total_wall_time_sec": 23.9256,
+    "stage_timings_sec": {
+      "1_input_validation": 0.0,
+      "2_business_key_validation": 0.0344,
+      "3_active_target_extraction": 0.0008,
+      "4_normalization_expressions": 0.0009,
+      "5_left_join": 0.031,
+      "6_field_comparison_evaluation": 0.0002,
+      "7_classification_filtering": 0.3498,
+      "8_deleted_anti_join": 0.0102,
+      "9_key_dataframes_attachment": 0.0009,
+      "10_changerecord_materialization": 16.1901,
+      "11_field_change_materialization": 6.7225,
+      "12_sorting_canonicalization": 0.0
+    },
+    "stage_percentages": {
+      "1_input_validation": 0.0,
+      "2_business_key_validation": 0.14,
+      "3_active_target_extraction": 0.0,
+      "4_normalization_expressions": 0.0,
+      "5_left_join": 0.13,
+      "6_field_comparison_evaluation": 0.0,
+      "7_classification_filtering": 1.46,
+      "8_deleted_anti_join": 0.04,
+      "9_key_dataframes_attachment": 0.0,
+      "10_changerecord_materialization": 67.67,
+      "11_field_change_materialization": 28.1,
+      "12_sorting_canonicalization": 0.0
+    },
+    "memory_metrics": {
+      "polars_buffers_mb": 174.95,
+      "python_heap_tracemalloc_mb": 403.6,
+      "process_rss_mb": 807.46,
+      "process_peak_working_set_mb": 1667.18
+    }
+  }
+}

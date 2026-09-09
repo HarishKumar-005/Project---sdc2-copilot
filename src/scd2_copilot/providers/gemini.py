@@ -15,25 +15,110 @@ from typing import Any
 from google import genai
 from pydantic import BaseModel, Field
 
+from ..config import DEFAULT_GEMINI_FALLBACK_MODELS, DEFAULT_GEMINI_MODEL
 from ..models import ChangeRecord, ChangeType, Explanation, LLMMetrics
 from .base import LLMProvider
 from .template import TemplateProvider
 
 logger = logging.getLogger(__name__)
 
-# Model fallback chain: try each in order until one works.
-# Each model has a separate daily free-tier quota, so if one is
-# exhausted we can try the next.
-MODEL_CHAIN = [
-    "gemini-3.1-flash-lite",
-    "gemini-3-flash",
-    "gemini-2.5-flash-lite",
-    "gemini-2.5-flash",
-    "gemini-3.5-flash",
-]
-
-MAX_RETRIES_PER_MODEL = 2
+MAX_RETRIES = 2  # 1 initial attempt + 2 retries = 3 total attempts
 RETRY_BASE_DELAY = 3  # seconds
+
+# Model-aware pricing registry: model_name -> (prompt_price_per_1m, completion_price_per_1m) in USD
+# Based on current official Google Gemini API pricing documentation:
+# - gemini-3.8-flash: $0.75/1M input, $3.75/1M output (introductory through Dec 31, 2026; $1.50/$7.50 from Jan 1, 2027)
+# - gemini-3.5-flash-lite: $0.30/1M input, $2.50/1M output
+# - gemini-3.1-flash-lite: $0.25/1M input, $1.50/1M output
+# - gemini-2.5-flash: $0.30/1M input, $2.50/1M output
+# - gemini-2.0-flash: $0.10/1M input, $0.40/1M output
+# - gemini-1.5-flash: $0.075/1M input, $0.30/1M output
+GEMINI_MODEL_PRICING: dict[str, tuple[float, float]] = {
+    "gemini-3.8-flash": (0.75, 3.75),
+    "gemini-3.5-flash-lite": (0.30, 2.50),
+    "gemini-3.1-flash-lite": (0.25, 1.50),
+    "gemini-2.5-flash": (0.30, 2.50),
+    "gemini-2.0-flash": (0.10, 0.40),
+    "gemini-1.5-flash": (0.075, 0.30),
+}
+
+
+def calculate_gemini_cost(
+    model: str,
+    prompt_tokens: int,
+    completion_tokens: int,
+    token_count_estimated: bool = False,
+) -> tuple[float, bool]:
+    """Calculate the estimated cost in USD for a given Gemini model.
+
+    Returns:
+        tuple[float, bool]: (estimated_cost, is_estimated)
+        If official current pricing cannot be safely determined for a model,
+        marks cost as estimated (0.0, True) rather than inventing a value.
+    """
+    from datetime import date
+
+    pricing = GEMINI_MODEL_PRICING.get(model)
+    if pricing is not None:
+        input_rate, output_rate = pricing
+        # For gemini-3.8-flash: introductory rates ($0.75/$3.75) through Dec 31, 2026;
+        # standard pricing ($1.50/$7.50) from Jan 1, 2027 onwards.
+        if model == "gemini-3.8-flash" and date.today() >= date(2027, 1, 1):
+            input_rate, output_rate = 1.50, 7.50
+
+        cost = (prompt_tokens * input_rate / 1_000_000) + (
+            completion_tokens * output_rate / 1_000_000
+        )
+        return cost, token_count_estimated
+    return 0.0, True
+
+
+def _classify_gemini_error(e: Exception) -> str:
+    """Classify an exception from Google GenAI SDK into a structured category.
+
+    Inspects structured SDK exception properties (code, status, ServerError, ClientError)
+    first, and falls back to string parsing only for backward-compatibility with unstructured exceptions.
+
+    Categories:
+    - "transient_rate_limit": Per-minute rate limits (HTTP 429 without daily quota exhaustion).
+    - "transient_server": Server-side transient issues (HTTP 5xx, ServerError, UNAVAILABLE).
+    - "exhausted_daily_quota": Daily quota exhausted (HTTP 429 with PerDay quota indicator).
+    - "invalid_model": Model not found or unsupported endpoint (HTTP 404, NOT_FOUND).
+    - "auth_failure": Authentication or permission errors (HTTP 401, 403, UNAUTHENTICATED, PERMISSION_DENIED).
+    - "unknown": Any other unclassified error.
+    """
+    code = getattr(e, "code", None)
+    if code is None:
+        code = getattr(e, "status_code", None)
+    status = getattr(e, "status", None)
+    msg = str(getattr(e, "message", None) or str(e))
+    msg_lower = msg.lower()
+
+    # 1. Authentication / Permission failure
+    if code in (401, 403) or status in ("UNAUTHENTICATED", "PERMISSION_DENIED"):
+        return "auth_failure"
+    if "unauthenticated" in msg_lower or "permission_denied" in msg_lower or "api key not valid" in msg_lower:
+        return "auth_failure"
+
+    # 2. Model not found / Unsupported model
+    if code == 404 or status == "NOT_FOUND":
+        return "invalid_model"
+    if "not found" in msg_lower or "unsupported" in msg_lower:
+        return "invalid_model"
+
+    # 3. Rate limits & Quotas (429 / RESOURCE_EXHAUSTED)
+    if code == 429 or status == "RESOURCE_EXHAUSTED" or "429" in msg or "resourceexhausted" in msg_lower:
+        if "perday" in msg_lower or "daily" in msg_lower:
+            return "exhausted_daily_quota"
+        return "transient_rate_limit"
+
+    # 4. Transient Server errors (5xx / ServerError)
+    if (isinstance(code, int) and 500 <= code < 600) or status in ("INTERNAL", "UNAVAILABLE", "DEADLINE_EXCEEDED"):
+        return "transient_server"
+    if any(s in msg for s in ["500", "502", "503", "504", "ServerError", "InternalServerError", "ServiceUnavailable"]):
+        return "transient_server"
+
+    return "unknown"
 
 
 class ExplanationItem(BaseModel):
@@ -46,11 +131,38 @@ class ExplanationItem(BaseModel):
 
 
 class GeminiProvider(LLMProvider):
-    """Generates explanations using the Gemini API with model fallback."""
+    """Generates explanations using the Gemini API with configuration-driven model fallback."""
 
-    def __init__(self, api_key: str) -> None:
+    def __init__(
+        self,
+        api_key: str,
+        model: str | None = None,
+        fallback_models: list[str] | None = None,
+    ) -> None:
+        clean_model = (model or "").strip()
+        self.primary_model = clean_model if clean_model else DEFAULT_GEMINI_MODEL
+        self.model = self.primary_model  # for backward compatibility
+
+        if fallback_models is not None:
+            cleaned = [str(m).strip() for m in fallback_models if str(m).strip()]
+            deduped: list[str] = []
+            seen = {self.primary_model}
+            for m in cleaned:
+                if m not in seen:
+                    deduped.append(m)
+                    seen.add(m)
+            self.fallback_models = deduped
+        else:
+            self.fallback_models = list(DEFAULT_GEMINI_FALLBACK_MODELS)
+
         self._client = genai.Client(api_key=api_key)
-        self._working_model: str | None = None  # cache the first model that works
+        self.last_attempted_models: list[str] = []
+        self.last_metrics: LLMMetrics | None = None
+
+    @property
+    def model_chain(self) -> list[str]:
+        """Ordered list of Gemini models to attempt (primary followed by unique fallbacks)."""
+        return [self.primary_model] + self.fallback_models
 
     @property
     def name(self) -> str:
@@ -58,7 +170,7 @@ class GeminiProvider(LLMProvider):
 
     def explain_change(self, record: ChangeRecord) -> Explanation:
         prompt = _build_prompt(record)
-        text, model_used = self._call_with_fallback(prompt)
+        text, model_used = self._call_model(prompt)
 
         return Explanation(
             business_key_values=record.business_key_values,
@@ -81,9 +193,9 @@ class GeminiProvider(LLMProvider):
         }
 
         try:
-            parsed_items, model_used = self._call_with_fallback(prompt, config=config)
+            parsed_items, model_used = self._call_model(prompt, config=config)
         except Exception as e:
-            logger.warning("Gemini batch API call failed: %s", e)
+            logger.warning("Gemini batch API call failed across all models: %s", e)
             raise
 
         # Map parsed results back to input records
@@ -114,36 +226,38 @@ class GeminiProvider(LLMProvider):
 
         return explanations
 
-    def _call_with_fallback(
+    def _call_model(
         self, prompt: str, config: dict | None = None
     ) -> tuple[Any, str]:
-        """Try models in the fallback chain until one succeeds.
+        """Call Gemini models in sequence with per-model retry for transient errors.
 
         Returns:
-            Tuple of (response_text or parsed_object, model_name).
+            Tuple of (response_text_or_parsed_object, successful_model_name).
 
         Raises:
-            Last exception if all models and retries fail.
+            Exception if all models in chain fail.
         """
-        # If we already found a working model, try it first
-        models = (
-            [self._working_model] if self._working_model
-            else list(MODEL_CHAIN)
-        )
-
+        attempted_models: list[str] = []
         last_error: Exception | None = None
 
-        for model in models:
-            for attempt in range(1, MAX_RETRIES_PER_MODEL + 1):
+        # Explicitly disable automatic function calling (AFC) to prevent google-genai
+        # from logging spurious AFC warnings when generating plain/structured content without tools.
+        call_config: dict[str, Any] = dict(config) if config else {}
+        if "automatic_function_calling" not in call_config and "tools" not in call_config:
+            call_config["automatic_function_calling"] = {"disable": True}
+
+        for model in self.model_chain:
+            attempted_models.append(model)
+            for attempt in range(MAX_RETRIES + 1):  # 1 initial + 2 retries = 3 total attempts
                 try:
                     response = self._client.models.generate_content(
                         model=model,
                         contents=prompt,
-                        config=config,
+                        config=call_config,
                     )
 
                     # Extract text or parsed schema depending on configuration
-                    if config and "response_schema" in config:
+                    if "response_schema" in call_config:
                         result = response.parsed
                     else:
                         result = response.text.strip() if response.text else ""
@@ -154,16 +268,20 @@ class GeminiProvider(LLMProvider):
                         prompt_tokens = getattr(usage, "prompt_token_count", 0) or 0
                         completion_tokens = getattr(usage, "candidates_token_count", 0) or 0
                         total_tokens = getattr(usage, "total_token_count", 0) or 0
-                        is_estimated = False
+                        token_count_estimated = False
                     else:
                         # Character-based estimation: 4 chars per token roughly
                         prompt_tokens = max(1, len(prompt) // 4)
                         completion_tokens = max(1, len(str(result)) // 4)
                         total_tokens = prompt_tokens + completion_tokens
-                        is_estimated = True
+                        token_count_estimated = True
 
-                    # Estimate cost: Prompt: $0.075 / 1M, Completion: $0.30 / 1M
-                    cost = (prompt_tokens * 0.075 / 1_000_000) + (completion_tokens * 0.30 / 1_000_000)
+                    cost, is_estimated = calculate_gemini_cost(
+                        model=model,
+                        prompt_tokens=prompt_tokens,
+                        completion_tokens=completion_tokens,
+                        token_count_estimated=token_count_estimated,
+                    )
 
                     self.last_metrics = LLMMetrics(
                         provider="gemini",
@@ -174,53 +292,55 @@ class GeminiProvider(LLMProvider):
                         estimated_cost=cost,
                         is_estimated=is_estimated,
                     )
+                    self.last_attempted_models = attempted_models
 
-                    # Cache this model for future calls
-                    self._working_model = model
                     return result, model
 
                 except Exception as e:
                     last_error = e
-                    err_str = str(e)
+                    category = _classify_gemini_error(e)
 
-                    if "429" in err_str and "PerDay" in err_str:
-                        # Daily quota exhausted — no point retrying this model
-                        logger.info(
-                            "Model %s daily quota exhausted, trying next model.",
-                            model,
-                        )
-                        break  # move to next model
+                    # Handle transient recoverable errors
+                    if category in ("transient_rate_limit", "transient_server"):
+                        if attempt < MAX_RETRIES:
+                            delay = RETRY_BASE_DELAY * (2 ** attempt)
+                            logger.info(
+                                "Model %s %s (attempt %d/%d), retrying in %ds...",
+                                model,
+                                category,
+                                attempt + 1,
+                                MAX_RETRIES + 1,
+                                delay,
+                            )
+                            time.sleep(delay)
+                            continue
+                        else:
+                            # Retries exhausted for this model: DO NOT sleep after the final attempt!
+                            logger.info(
+                                "Model %s exhausted %d retries for %s. Advancing to next model.",
+                                model,
+                                MAX_RETRIES,
+                                category,
+                            )
+                            break
 
-                    if "404" in err_str:
-                        # Model not found — skip entirely
-                        logger.info("Model %s not found, trying next.", model)
-                        break
-
-                    if "429" in err_str:
-                        # Per-minute rate limit — retry with backoff
-                        delay = RETRY_BASE_DELAY * (2 ** (attempt - 1))
-                        logger.info(
-                            "Model %s rate-limited (attempt %d/%d), "
-                            "retrying in %ds...",
-                            model, attempt, MAX_RETRIES_PER_MODEL, delay,
-                        )
-                        time.sleep(delay)
-                        continue
-
-                    # Unknown error — don't retry, try next model
-                    logger.warning(
-                        "Model %s failed with %s: %s",
-                        model, type(e).__name__, str(e)[:200],
+                    # Non-recoverable errors (exhausted_daily_quota, invalid_model, auth_failure, unknown)
+                    logger.info(
+                        "Model %s failed with non-recoverable %s (%s). Advancing to next model.",
+                        model,
+                        category,
+                        type(e).__name__,
                     )
                     break
 
-        # If cached model failed, try the full chain
-        if self._working_model:
-            self._working_model = None
-            return self._call_with_fallback(prompt, config=config)
+        self.last_attempted_models = attempted_models
+        raise last_error or RuntimeError(f"All Gemini models failed: {attempted_models}")
 
-        # All models exhausted
-        raise last_error or RuntimeError("All Gemini models failed.")
+    def _call_with_fallback(
+        self, prompt: str, config: dict | None = None
+    ) -> tuple[Any, str]:
+        """Backward-compatible wrapper returning (result, model_name)."""
+        return self._call_model(prompt, config=config)
 
 
 def _build_prompt(record: ChangeRecord) -> str:

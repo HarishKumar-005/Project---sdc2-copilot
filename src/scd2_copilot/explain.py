@@ -28,6 +28,7 @@ class ExplainResult:
     warnings: list[str] = field(default_factory=list)
     provider_used: str = "template"
     metrics: Optional[LLMMetrics] = None
+    fallback_count: int = 0
 
 
 def get_provider(settings: Settings) -> LLMProvider:
@@ -38,7 +39,11 @@ def get_provider(settings: Settings) -> LLMProvider:
     effective = settings.get_effective_provider()
 
     if effective == LLMProviderEnum.GEMINI:
-        return GeminiProvider(api_key=settings.gemini_api_key)
+        return GeminiProvider(
+            api_key=settings.gemini_api_key,
+            model=settings.gemini_model,
+            fallback_models=settings.gemini_fallback_models,
+        )
     elif effective == LLMProviderEnum.GROQ:
         return GroqProvider(api_key=settings.groq_api_key)
     else:
@@ -96,8 +101,14 @@ def explain_changes(
                     fallback_count += 1
 
         result.explanations = explanations
+        result.fallback_count = fallback_count
 
         if fallback_count > 0:
+            if fallback_count == len(records_to_explain):
+                result.provider_used = "template"
+            else:
+                result.provider_used = f"{provider.name} (partial template fallback)"
+
             result.warnings.append(
                 f"⚠️ {provider.name.capitalize()} API fell back to template "
                 f"for {fallback_count} explanation(s) due to missing items in the response."
@@ -111,16 +122,62 @@ def explain_changes(
             metrics.avg_tokens_per_change = (metrics.total_tokens / len(records_to_explain)) if records_to_explain else 0.0
             result.metrics = metrics
 
+        # If Gemini used a fallback model, note it in warnings
+        if provider.name == "gemini":
+            attempted = getattr(provider, "last_attempted_models", [])
+            if len(attempted) > 1 and metrics:
+                result.warnings.append(
+                    f"⚠️ Gemini primary model failed. Successfully used fallback model '{metrics.model}'."
+                )
+
+        return result
+
     except Exception as e:
         duration = time.perf_counter() - t_start
         error_msg = f"{type(e).__name__}: {e}"
         logger.warning(
-            "Batch provider '%s' failed: %s. Falling back to template for all records.",
+            "Batch provider '%s' failed: %s.",
             provider.name,
             e,
         )
 
-        # Batch call failed entirely: generate explanations with template
+        # Runtime fallback: Gemini -> Groq -> Template
+        if provider.name == "gemini" and settings and settings.has_groq_key:
+            try:
+                logger.info("Attempting runtime fallback to Groq provider.")
+                groq_provider = GroqProvider(api_key=settings.groq_api_key)
+                t_groq_start = time.perf_counter()
+                groq_explanations = groq_provider.explain_changes_batch(records_to_explain)
+                groq_duration = time.perf_counter() - t_groq_start
+
+                result.explanations = groq_explanations
+                result.provider_used = "groq"
+                groq_metrics = getattr(groq_provider, "last_metrics", None)
+                if groq_metrics:
+                    groq_metrics.request_duration = groq_duration
+                    groq_metrics.num_changes_explained = len(records_to_explain)
+                    groq_metrics.avg_tokens_per_change = (
+                        groq_metrics.total_tokens / len(records_to_explain)
+                    ) if records_to_explain else 0.0
+                    result.metrics = groq_metrics
+
+                result.warnings.append(
+                    f"⚠️ Gemini API failed: {error_msg}. Fell back to Groq."
+                )
+                return result
+
+            except Exception as groq_err:
+                logger.warning("Groq fallback also failed: %s. Falling back to template.", groq_err)
+                result.warnings.append(
+                    f"⚠️ Gemini API failed: {error_msg}. Groq fallback failed: {type(groq_err).__name__}: {groq_err}. Fell back to template."
+                )
+        else:
+            if provider.name != "template":
+                result.warnings.append(
+                    f"⚠️ {provider.name.capitalize()} API failed: {error_msg}. Fell back to template."
+                )
+
+        # Batch call failed: generate explanations with template
         result.explanations = [template.explain_change(r) for r in records_to_explain]
         result.provider_used = "template"
 
@@ -137,9 +194,4 @@ def explain_changes(
             is_estimated=False,
         )
 
-        if provider.name != "template":
-            result.warnings.append(
-                f"⚠️ {provider.name.capitalize()} API failed: {error_msg}. Fell back to template."
-            )
-
-    return result
+        return result
