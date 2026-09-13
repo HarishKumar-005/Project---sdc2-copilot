@@ -1,0 +1,25 @@
+services:
+  scd2-copilot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: scd2-copilot:local
+    container_name: scd2-copilot
+    ports:
+      - "8501:8501"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - LLM_PROVIDER=${LLM_PROVIDER:-gemini}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-3.8-flash}
+      - GEMINI_FALLBACK_MODELS=${GEMINI_FALLBACK_MODELS:-gemini-3.5-flash-lite,gemini-3.1-flash-lite,gemini-2.5-flash}
+      - PREFECT_SERVER_ANALYTICS_ENABLED=false
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8501/_stcore/health').read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

@@ -686,3 +686,68 @@ def test_poll_deployment_run_state_cancelled(source_df: pl.DataFrame, target_df:
     assert "User cancelled" in (err_msg or "")
 
 
+# ── Regression: Import-Time Environment Isolation & Ephemeral In-Process Execution ──
+
+
+def test_import_deployment_does_not_mutate_prefect_api_url():
+    """Verify importing deployment.py in a clean environment does NOT set PREFECT_API_URL.
+
+    Regression test: Previously, deployment.py executed:
+        os.environ.setdefault('PREFECT_API_URL', 'http://127.0.0.1:4200/api')
+    at module import time, contaminating the process environment and breaking
+    interactive in-process runs when no Prefect server was running on port 4200.
+    """
+    import os
+    import subprocess
+    import sys
+
+    env = os.environ.copy()
+    env.pop("PREFECT_API_URL", None)
+
+    code = (
+        "import os\n"
+        "assert 'PREFECT_API_URL' not in os.environ, 'PREFECT_API_URL was preset'\n"
+        "import src.scd2_copilot.deployment\n"
+        "assert 'PREFECT_API_URL' not in os.environ, (\n"
+        "    f'Importing deployment.py set PREFECT_API_URL to: {os.environ.get(\"PREFECT_API_URL\")}'\n"
+        ")\n"
+    )
+    result = subprocess.run([sys.executable, "-c", code], env=env, capture_output=True, text=True)
+    assert result.returncode == 0, (
+        f"Import contaminated environment:\nSTDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
+    )
+
+
+def test_in_process_execution_without_prefect_api_url(
+    source_df: pl.DataFrame, target_df: pl.DataFrame, monkeypatch: pytest.MonkeyPatch
+):
+    """Verify in-process execution succeeds cleanly without PREFECT_API_URL set or an external server.
+
+    Regression test: Validates that interactive in-process execution uses Prefect's
+    self-contained ephemeral mode and does not attempt to contact localhost:4200.
+    """
+    import os
+    from datetime import date
+    from src.scd2_copilot.config import get_settings
+
+    # Ensure PREFECT_API_URL is completely unset
+    monkeypatch.delenv("PREFECT_API_URL", raising=False)
+    assert "PREFECT_API_URL" not in os.environ
+
+    result = run_pipeline(
+        source=source_df,
+        target=target_df,
+        processing_date=date(2026, 6, 8),
+        business_key_override=["customer_id"],
+        tracked_columns_override=["name", "city", "tier"],
+        llm_provider="template",
+        settings=get_settings(),
+    )
+
+    assert result is not None
+    assert result.scd2_output is not None
+    assert result.scd2_output.height == 5
+    assert result.validation_report.passed is True
+
+
+

@@ -26,13 +26,6 @@ from uuid import UUID
 import polars as pl
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-# ── CRITICAL: Set PREFECT_API_URL BEFORE importing Prefect ──────────────
-# Prefect reads PREFECT_API_URL during initialization. If unset at import
-# time, each process starts its own ephemeral server on a random port.
-# This causes the parent (serve) and child (flow subprocess) to use
-# independent servers, leading to "concurrency slot lost" failures.
-# Setting it here ensures ALL Prefect modules see a consistent API URL.
-os.environ.setdefault("PREFECT_API_URL", "http://127.0.0.1:4200/api")
 from prefect import serve
 from prefect.client.orchestration import get_client
 from prefect.client.schemas.actions import WorkPoolCreate

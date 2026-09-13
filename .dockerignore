@@ -1,0 +1,78 @@
+# Version control
+.git
+.gitignore
+
+# Virtual environments
+.venv
+venv
+env
+ENV
+env.bak
+venv.bak
+
+# Python byte code and compiler caches
+__pycache__
+*.py[cod]
+*.class
+*.so
+build/
+dist/
+*.egg-info/
+
+# Test runners, coverage, and caches
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.cache/
+.hypothesis/
+.tox/
+.nox/
+
+# Linters, analysis, and agent workspaces
+.ruff_cache/
+.mypy_cache/
+.dmypy.json
+graphify-out/
+.graphify/
+.claude/
+.gemini/
+.agents/
+
+# Sensitive files & secrets (CRITICAL - DO NOT BAKE INTO IMAGE)
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+*.cert
+*.crt
+
+# Runtime mutable state (CRITICAL - DO NOT BAKE INTO IMAGE)
+data/runs/*
+data/runs/.*
+data/runs/.fingerprints/**
+data/staging/*
+data/staging/.*
+data/quarantine/*
+data/quarantine/.*
+runs/*
+quarantine/*
+staging/*
+*.parquet
+*.parquet.tmp
+
+# Prefect local databases and SQLite
+.prefect/
+prefect.db*
+*.sqlite*
+*.db*
+
+# IDEs, OS, and scratch files
+.vscode/
+.idea/
+*.log
+.DS_Store
+Thumbs.db
+desktop.ini
