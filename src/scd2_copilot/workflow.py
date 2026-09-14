@@ -285,6 +285,7 @@ def persist_task(
     is_reused: bool = False,
     reused_from_run_id: Optional[str] = None,
     deduplication_status: str = "new_execution",
+    created_by: Optional[dict[str, Any]] = None,
 ) -> Any:
     """Persist pipeline outputs and metadata to isolated filesystem directory."""
     from .artifacts import write_run_artifacts
@@ -303,6 +304,7 @@ def persist_task(
         is_reused=is_reused,
         reused_from_run_id=reused_from_run_id,
         deduplication_status=deduplication_status,
+        created_by=created_by,
     )
 
 
@@ -323,6 +325,7 @@ def run_pipeline(
     reuse_existing: Optional[bool] = None,
     force_recompute: bool = False,
     data_contract: Optional[Any] = None,
+    created_by: Optional[dict[str, Any]] = None,
 ) -> PipelineResult:
     """Execute the full SCD2 pipeline under Prefect 3 orchestration.
 
@@ -583,6 +586,7 @@ def run_pipeline(
             artifact_directory=found_run.artifact_directory,
             artifact_files=list(found_run.artifact_files.values()),
             persistence_duration_seconds=0.0,
+            created_by=getattr(found_run, "created_by", None) or created_by,
         )
 
         return PipelineResult(
@@ -739,6 +743,7 @@ def run_pipeline(
         is_reused=False,
         reused_from_run_id=None,
         deduplication_status=dedup_status,
+        created_by=created_by,
     )
 
     result = PipelineResult(
@@ -774,6 +779,7 @@ def run_pipeline(
                 is_reused=False,
                 reused_from_run_id=None,
                 deduplication_status=dedup_status,
+                created_by=created_by,
             )
             persist_duration = time.perf_counter() - t_persist
             task_durations["persist_artifacts"] = persist_duration

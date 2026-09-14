@@ -43,6 +43,7 @@ graphify-out/
 .env
 .env.*
 !.env.example
+.streamlit/secrets.toml
 secrets/
 *.pem
 *.key

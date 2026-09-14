@@ -81,7 +81,13 @@
 [class*="material-symbols"],
 [data-testid="stIconMaterial"],
 [data-testid="stExpanderToggleIcon"],
-[data-testid="stIcon"] {
+[data-testid="stIcon"],
+.stApp .stMarkdown .material-symbols-rounded,
+.stApp .stMarkdown .material-symbols-outlined,
+.stApp .stMarkdown [class*="material-symbols"],
+.stApp .stMarkdown [data-testid="stIconMaterial"],
+.stApp [data-testid="stSidebar"] .material-symbols-rounded,
+.stApp [data-testid="stSidebar"] [class*="material-symbols"] {
     font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', sans-serif !important;
 }
 

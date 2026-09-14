@@ -23,6 +23,7 @@ from src.scd2_copilot.models import (
     LLMMetrics,
 )
 from src.scd2_copilot.explain import ExplainResult
+from src.scd2_copilot.auth import AuthenticatedUser
 
 # ── Inline SVG icon library ────────────────────────────
 # Monoline 16×16 icons, stroke-based. Self-contained with zero external dependencies.
@@ -56,6 +57,7 @@ _ICONS = {
     "file_text": '<svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 1.5h5.5L13 5v8.5a1 1 0 01-1 1H4a1 1 0 01-1-1v-12a1 1 0 011-1z"/><path d="M9 1.5V5h3.5"/><path d="M5.5 8h5M5.5 10.5h5"/></svg>',
     "zap": '<svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 1.5L3.5 9H8l-1 5.5L12.5 7H8l1-5.5z"/></svg>',
     "database": '<svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><ellipse cx="8" cy="4" rx="5.5" ry="2.5"/><path d="M2.5 4v8c0 1.38 2.46 2.5 5.5 2.5s5.5-1.12 5.5-2.5V4"/><path d="M2.5 8c0 1.38 2.46 2.5 5.5 2.5s5.5-1.12 5.5-2.5"/></svg>',
+    "user": '<svg class="icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="5" r="3"/><path d="M2.5 14c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/></svg>',
 }
 
 
@@ -78,12 +80,77 @@ def inject_theme() -> None:
 # ── 1. Product Header ──────────────────────────────────
 
 
+# ── Authentication UI Components ───────────────────────
+
+
+def render_login_gate() -> None:
+    """Render a clean, professional sign-in page when user is unauthenticated."""
+    from src.scd2_copilot.auth import is_auth_configured, trigger_google_login
+
+    col_l, col_center, col_r = st.columns([1.2, 2.0, 1.2])
+    with col_center:
+        st.markdown(
+            f"""
+            <div style="text-align: center; margin-top: 56px; margin-bottom: 24px;">
+                <div style="display: inline-flex; align-items: center; justify-content: center; gap: 10px; font-size: 2rem; font-weight: 700; color: var(--text-primary, #ffffff); margin-bottom: 6px;">
+                    {_icon("database")} SCD2 Copilot
+                </div>
+                <div style="font-size: 0.95rem; color: var(--text-secondary, #8b949e);">
+                    Historical Data Change &amp; Analytics Platform
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        with st.container(border=True):
+            st.markdown("### Sign in")
+            st.markdown(
+                "<div style='font-size: 0.9rem; color: var(--text-secondary, #8b949e); margin-top: -6px; margin-bottom: 20px;'>"
+                "Sign in with your account to access your workspace."
+                "</div>",
+                unsafe_allow_html=True,
+            )
+
+            if st.button("Continue with Google", type="primary", width="stretch", icon=":material/login:"):
+                trigger_google_login()
+
+            if not is_auth_configured():
+                st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
+                st.info(
+                    "Authentication credentials not configured in `.streamlit/secrets.toml`. "
+                    "Provide `client_id`, `client_secret`, and `cookie_secret` to enable login."
+                )
+
+
+def render_user_badge(user: Optional[AuthenticatedUser]) -> None:
+    """Render authenticated user identity and logout control in the sidebar."""
+    if not user:
+        return
+    st.sidebar.markdown("---")
+    st.sidebar.caption("SIGNED IN AS")
+    display_name = user.name or (user.email.split("@")[0] if user.email else user.subject)
+    user_svg = _icon("user")
+    st.sidebar.markdown(
+        f'<div style="display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 0.95rem; margin-top: 2px; margin-bottom: 4px; color: var(--text-primary, #ffffff);">'
+        f'{user_svg} <span>{html_mod.escape(display_name)}</span>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+    if user.email:
+        st.sidebar.caption(user.email)
+    from src.scd2_copilot.auth import trigger_logout
+    if st.sidebar.button("Log out", key="btn_auth_logout", width="stretch", icon=":material/logout:"):
+        trigger_logout()
+
+
 def render_header(
     processing_date: date,
     provider_name: str = "template",
     provider_ready: bool = True,
     pipeline_status: str = "idle",
     persisted_run_id: Optional[str] = None,
+    user: Optional[AuthenticatedUser] = None,
 ) -> None:
     """Top-of-page clean product header with synchronized date and subtle status badge."""
     provider_dot = "dot-green" if provider_ready else "dot-red"
@@ -104,6 +171,11 @@ def render_header(
         f'<span class="header-badge"><span class="dot {provider_dot}"></span> AI Engine: <strong>{provider_label}</strong></span>',
         f'<span class="header-badge"><span class="dot {status_dot}"></span> Status: <strong>{status_text}</strong></span>',
     ]
+    if user and (user.name or user.email):
+        user_label = user.name or user.email
+        meta_badges.append(
+            f'<span class="header-badge">{_icon("user")} User: <strong>{html_mod.escape(user_label)}</strong></span>'
+        )
     if persisted_run_id:
         meta_badges.append(
             f'<span class="header-badge" style="border-color:var(--accent);">'
@@ -990,6 +1062,9 @@ def render_history_tab(run_history: Optional[list[dict]] = None) -> None:
                 st.write(f"**Trigger:** `{r.trigger_type}`")
                 st.write(f"**Effective Date:** `{r.processing_date or '—'}`")
                 st.write(f"**AI Engine:** `{r.ai_status}` (`{r.ai_provider or 'template'}`)")
+                if getattr(r, "created_by", None):
+                    creator = r.created_by.get("name") or r.created_by.get("email") or r.created_by.get("subject")
+                    st.write(f"**Executed By:** `{creator}`")
 
             with col2:
                 st.write(f"**Output Rows:** {r.row_counts.get('output', '—')}")

@@ -416,6 +416,7 @@ class OrchestrationSummary:
     artifact_directory: Optional[str] = None
     artifact_files: list[str] = field(default_factory=list)
     persistence_duration_seconds: float = 0.0
+    created_by: Optional[dict[str, Any]] = None
 
 
 @dataclass

@@ -9,9 +9,16 @@ import html as html_mod
 import logging
 import sys
 import time
+import warnings
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any, Optional
+
+try:
+    from authlib.deprecate import AuthlibDeprecationWarning
+    warnings.filterwarnings("ignore", category=AuthlibDeprecationWarning)
+except ImportError:
+    pass
 
 import polars as pl
 import streamlit as st
@@ -23,6 +30,7 @@ _project_root = Path(__file__).resolve().parent.parent
 if str(_project_root) not in sys.path:
     sys.path.insert(0, str(_project_root))
 
+from src.scd2_copilot.auth import get_current_user, is_user_logged_in
 from src.scd2_copilot.config import get_settings, LLMProvider
 from src.scd2_copilot.exceptions import ContractValidationError, DuplicateBusinessKeyError
 from src.scd2_copilot.deployment import (
@@ -56,6 +64,8 @@ from ui_components import (
     render_history_tab,
     render_downloads,
     render_advanced_panel,
+    render_login_gate,
+    render_user_badge,
 )
 
 # ── Page Config ────────────────────────────────────────
@@ -142,6 +152,13 @@ def populate_session_state_from_persisted_run(
 # ── Inject Theme ──────────────────────────────────────
 inject_theme()
 
+# ── Authentication Gate (Google OIDC) ─────────────────
+if not is_user_logged_in():
+    render_login_gate()
+    st.stop()
+
+current_user = get_current_user()
+
 # ── Settings & AI Options ─────────────────────────────
 settings = get_settings()
 
@@ -166,6 +183,7 @@ default_idx = 0 if settings.has_gemini_key else provider_options.index("template
 
 # ── Sidebar: Clean Overview ───────────────────────────
 with st.sidebar:
+    render_user_badge(current_user)
     st.markdown("### SCD2 Copilot")
     st.caption("AI-Assisted Data Change & Historical Analytics Platform")
     st.markdown(
@@ -202,6 +220,7 @@ render_header(
     provider_ready=settings.has_gemini_key or settings.has_groq_key,
     pipeline_status=st.session_state["pipeline_status"],
     persisted_run_id=st.session_state.get("persisted_run_id"),
+    user=current_user,
 )
 
 # ── 1. Data Ingestion & Workspace ─────────────────────
@@ -431,6 +450,7 @@ if source_input is not None and target_input is not None:
             else:
                 # Interactive In-Process Execution through Prefect Orchestration Boundary
                 with st.spinner("Analyzing changes and generating SCD2 history…"):
+                    user_audit = current_user.to_audit_dict() if current_user else None
                     result = run_pipeline(
                         source=source_df,
                         target=target_df,
@@ -441,6 +461,7 @@ if source_input is not None and target_input is not None:
                         delete_policy=delete_policy,
                         settings=settings,
                         force_recompute=force_recompute,
+                        created_by=user_audit,
                     )
 
                     st.session_state.update({
@@ -474,6 +495,7 @@ if source_input is not None and target_input is not None:
                         "is_reused": result.orchestration_summary.is_reused if result.orchestration_summary else False,
                         "deduplication_status": result.orchestration_summary.deduplication_status if result.orchestration_summary else "new_execution",
                         "execution_fingerprint": result.orchestration_summary.execution_fingerprint if result.orchestration_summary else None,
+                        "created_by": (current_user.name or current_user.email) if current_user else "—",
                     })
 
                     st.rerun()

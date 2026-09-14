@@ -95,6 +95,7 @@ class RunMetadata:
     deduplication_status: str = "new_execution"
     artifact_directory: str = ""
     artifact_files: dict[str, str] = field(default_factory=lambda: dict(DEFAULT_ARTIFACT_FILES))
+    created_by: Optional[dict[str, Any]] = None
 
     def to_dict(self) -> dict[str, Any]:
         """Convert metadata to JSON-serializable dictionary."""
@@ -436,6 +437,7 @@ def write_run_artifacts(
     is_reused: bool = False,
     reused_from_run_id: Optional[str] = None,
     deduplication_status: str = "new_execution",
+    created_by: Optional[dict[str, Any]] = None,
 ) -> RunMetadata:
     """Persist pipeline outputs and metadata to isolated filesystem directory with write atomicity.
 
@@ -626,6 +628,7 @@ def write_run_artifacts(
             deduplication_status=deduplication_status,
             artifact_directory=str(final_dir),
             artifact_files=dict(DEFAULT_ARTIFACT_FILES),
+            created_by=created_by or (orch.created_by if orch and hasattr(orch, "created_by") else None),
         )
 
         with open(meta_path, "w", encoding="utf-8") as f:
