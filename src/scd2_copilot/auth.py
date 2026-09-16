@@ -12,6 +12,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 import logging
 from typing import Any, Optional
+from urllib.parse import urlparse
 import warnings
 
 try:
@@ -117,12 +118,89 @@ def get_current_user() -> Optional[AuthenticatedUser]:
         return None
 
 
+def get_current_request_origin() -> Optional[str]:
+    """Extract the current web origin (scheme + host) from Streamlit context if available."""
+    try:
+        if hasattr(st, "context"):
+            # Check st.context.url first
+            ctx_url = getattr(st.context, "url", None)
+            if ctx_url:
+                parsed = urlparse(ctx_url)
+                if parsed.scheme and parsed.netloc:
+                    return f"{parsed.scheme}://{parsed.netloc}"
+
+            # Fall back to headers
+            if hasattr(st.context, "headers"):
+                headers = st.context.headers
+                host = headers.get("x-forwarded-host") or headers.get("host")
+                if host:
+                    is_local = "localhost" in host or "127.0.0.1" in host
+                    proto = headers.get("x-forwarded-proto") or ("http" if is_local else "https")
+                    return f"{proto}://{host}"
+    except Exception:
+        pass
+    return None
+
+
+def sync_redirect_uri_with_host() -> Optional[str]:
+    """Ensure redirect_uri in secrets matches the current deployment origin if running in cloud.
+
+    When deployed to Streamlit Community Cloud (e.g. sdc2-copilot.streamlit.app),
+    secrets might still contain 'http://localhost:8501/oauth2callback' copied from
+    local dev. This function dynamically adapts redirect_uri in memory so the OIDC
+    flow redirects back to the actual deployed application domain instead of localhost.
+
+    Returns:
+        The active redirect_uri (either existing or dynamically adjusted), or None.
+    """
+    try:
+        if not hasattr(st, "secrets") or "auth" not in st.secrets:
+            return None
+
+        auth_sec = st.secrets["auth"]
+        current_redirect = auth_sec.get("redirect_uri", "")
+
+        origin = get_current_request_origin()
+        if not origin:
+            return current_redirect or None
+
+        expected_redirect = f"{origin.rstrip('/')}/oauth2callback"
+        if current_redirect == expected_redirect:
+            return current_redirect
+
+        is_local_config = "localhost" in current_redirect or "127.0.0.1" in current_redirect
+        is_remote_origin = "localhost" not in origin and "127.0.0.1" not in origin
+
+        # Only auto-sync if currently configured as localhost but accessed via remote cloud origin
+        if is_local_config and is_remote_origin:
+            from streamlit.runtime.secrets import AttrDict, secrets_singleton
+
+            def _to_plain_dict(obj: Any) -> Any:
+                if isinstance(obj, (dict, AttrDict)):
+                    return {k: _to_plain_dict(v) for k, v in obj.items()}
+                elif isinstance(obj, list):
+                    return [_to_plain_dict(v) for v in obj]
+                return obj
+
+            auth_dict = _to_plain_dict(secrets_singleton.get("auth", {}))
+            auth_dict["redirect_uri"] = expected_redirect
+            secrets_singleton.merge_programmatic_secrets({"auth": auth_dict})
+            logger.info("Automatically synced auth redirect_uri to: %s", expected_redirect)
+            return expected_redirect
+
+        return current_redirect or None
+    except Exception as exc:
+        logger.debug("Could not auto-sync redirect_uri with host: %s", exc)
+        return None
+
+
 def is_auth_configured() -> bool:
     """Determine whether Streamlit OIDC authentication credentials are configured.
 
     Checks for the presence of the [auth] section in st.secrets.
     """
     try:
+        sync_redirect_uri_with_host()
         if not hasattr(st, "secrets"):
             return False
         if "auth" not in st.secrets:
@@ -144,6 +222,7 @@ def trigger_google_login() -> None:
     Directs the user to Google OAuth2 consent screen.
     """
     try:
+        sync_redirect_uri_with_host()
         if hasattr(st, "secrets") and "auth" in st.secrets and "google" in st.secrets["auth"]:
             st.login("google")
         else:

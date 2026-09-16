@@ -85,7 +85,14 @@ def inject_theme() -> None:
 
 def render_login_gate() -> None:
     """Render a clean, professional sign-in page when user is unauthenticated."""
-    from src.scd2_copilot.auth import is_auth_configured, trigger_google_login
+    from src.scd2_copilot.auth import (
+        is_auth_configured,
+        sync_redirect_uri_with_host,
+        trigger_google_login,
+    )
+
+    # Proactively align redirect_uri with current host origin if deployed
+    sync_redirect_uri_with_host()
 
     col_l, col_center, col_r = st.columns([1.2, 2.0, 1.2])
     with col_center:

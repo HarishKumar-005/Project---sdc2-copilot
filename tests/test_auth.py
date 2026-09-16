@@ -20,9 +20,11 @@ from src.scd2_copilot.artifacts import (
 )
 from src.scd2_copilot.auth import (
     AuthenticatedUser,
+    get_current_request_origin,
     get_current_user,
     is_auth_configured,
     is_user_logged_in,
+    sync_redirect_uri_with_host,
 )
 from src.scd2_copilot.config import Settings
 from src.scd2_copilot.models import (
@@ -173,6 +175,68 @@ def test_auth_configured_check():
 
     with patch.object(st, "secrets", {"auth": {"google": {"client_id": "cid", "client_secret": "csec"}}}):
         assert is_auth_configured() is True
+
+
+def test_get_current_request_origin_from_url_and_headers():
+    """get_current_request_origin correctly extracts origin from context url or headers."""
+    # Context with url
+    mock_ctx = type("MockCtx", (), {"url": "https://sdc2-copilot.streamlit.app/some_page"})()
+    with patch.object(st, "context", mock_ctx):
+        assert get_current_request_origin() == "https://sdc2-copilot.streamlit.app"
+
+    # Context with headers (forwarded host on cloud)
+    mock_ctx_headers = type(
+        "MockCtxHeaders",
+        (),
+        {
+            "url": None,
+            "headers": {"x-forwarded-host": "sdc2-copilot.streamlit.app", "x-forwarded-proto": "https"},
+        },
+    )()
+    with patch.object(st, "context", mock_ctx_headers):
+        assert get_current_request_origin() == "https://sdc2-copilot.streamlit.app"
+
+    # Context with localhost
+    mock_ctx_local = type(
+        "MockCtxLocal",
+        (),
+        {
+            "url": None,
+            "headers": {"host": "localhost:8501"},
+        },
+    )()
+    with patch.object(st, "context", mock_ctx_local):
+        assert get_current_request_origin() == "http://localhost:8501"
+
+
+def test_sync_redirect_uri_with_host_cloud_origin():
+    """sync_redirect_uri_with_host dynamically adapts localhost redirect_uri when on cloud."""
+    mock_ctx = type("MockCtx", (), {"url": "https://sdc2-copilot.streamlit.app/"})()
+    mock_secrets = {
+        "auth": {
+            "redirect_uri": "http://localhost:8501/oauth2callback",
+            "client_id": "cid",
+            "client_secret": "csec",
+        }
+    }
+    with patch.object(st, "context", mock_ctx), patch.object(st, "secrets", mock_secrets):
+        res = sync_redirect_uri_with_host()
+        assert res == "https://sdc2-copilot.streamlit.app/oauth2callback"
+
+
+def test_sync_redirect_uri_with_host_leaves_localhost_intact():
+    """sync_redirect_uri_with_host leaves localhost redirect_uri intact when running locally."""
+    mock_ctx = type("MockCtx", (), {"url": "http://localhost:8501/"})()
+    mock_secrets = {
+        "auth": {
+            "redirect_uri": "http://localhost:8501/oauth2callback",
+            "client_id": "cid",
+            "client_secret": "csec",
+        }
+    }
+    with patch.object(st, "context", mock_ctx), patch.object(st, "secrets", mock_secrets):
+        res = sync_redirect_uri_with_host()
+        assert res == "http://localhost:8501/oauth2callback"
 
 
 # ── 3. Run Metadata Backward Compatibility & Persistence Tests 
