@@ -6,7 +6,7 @@ from dataclasses import FrozenInstanceError
 from datetime import date
 from pathlib import Path
 from typing import Any
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import polars as pl
 import pytest
@@ -566,3 +566,53 @@ def test_run_pipeline_attaches_created_by(tmp_path: Path):
     assert len(runs) >= 1
     matched = [r for r in runs if r.created_by == user_meta]
     assert len(matched) == 1
+
+
+# ── 12. Request Origin & Redirect Resolution Tests ───────────
+
+
+def test_get_current_request_origin_from_settings():
+    """Verify settings.streamlit_app_url takes top priority."""
+    with patch("src.scd2_copilot.auth.get_settings") as mock_settings:
+        mock_settings.return_value = Settings(streamlit_app_url="https://scd2-demo.streamlit.app/")
+        origin = get_current_request_origin()
+        assert origin == "https://scd2-demo.streamlit.app"
+
+
+def test_get_current_request_origin_from_secrets():
+    """Verify st.secrets['STREAMLIT_APP_URL'] is resolved when settings URL is blank."""
+    with patch("src.scd2_copilot.auth.get_settings") as mock_settings:
+        mock_settings.return_value = Settings(streamlit_app_url="")
+        with patch.object(st, "secrets", {"STREAMLIT_APP_URL": "https://cloud-app.streamlit.app/"}):
+            origin = get_current_request_origin()
+            assert origin == "https://cloud-app.streamlit.app"
+
+
+def test_get_current_request_origin_from_context_url():
+    """Verify st.context.url is used when no explicit settings/secrets are provided."""
+    with patch("src.scd2_copilot.auth.get_settings") as mock_settings:
+        mock_settings.return_value = Settings(streamlit_app_url="")
+        with patch.object(st, "secrets", {}):
+            mock_ctx = MagicMock()
+            mock_ctx.url = "https://subdomain.streamlit.app/some/path?param=1"
+            mock_ctx.headers = {}
+            with patch.object(st, "context", mock_ctx):
+                origin = get_current_request_origin()
+                assert origin == "https://subdomain.streamlit.app"
+
+
+def test_get_current_request_origin_from_headers():
+    """Verify st.context.headers['x-forwarded-host'] is used as fallback."""
+    with patch("src.scd2_copilot.auth.get_settings") as mock_settings:
+        mock_settings.return_value = Settings(streamlit_app_url="")
+        with patch.object(st, "secrets", {}):
+            mock_ctx = MagicMock()
+            mock_ctx.url = None
+            mock_ctx.headers = {
+                "x-forwarded-host": "my-proxy-app.streamlit.app",
+                "x-forwarded-proto": "https",
+            }
+            with patch.object(st, "context", mock_ctx):
+                origin = get_current_request_origin()
+                assert origin == "https://my-proxy-app.streamlit.app"
+
