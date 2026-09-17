@@ -39,6 +39,10 @@ DEFAULT_GEMINI_FALLBACK_MODELS: list[str] = [
 ]
 
 
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+SAMPLE_DATA_DIR = PROJECT_ROOT / "sample-data"
+
+
 def _decode_complex_env_value(field_name: str, field: Any, value: Any) -> Any:
     """Helper to decode complex values from env, accepting JSON or comma-separated lists."""
     if isinstance(value, str):
@@ -52,11 +56,37 @@ def _decode_complex_env_value(field_name: str, field: Any, value: Any) -> Any:
     return value
 
 
+class StreamlitSecretsSettingsSource(PydanticBaseSettingsSource):
+    """Read configuration from streamlit.secrets when running inside Streamlit."""
+
+    def get_field_value(self, field: Any, field_name: str) -> tuple[Any, str, bool]:
+        try:
+            import streamlit as st
+            if hasattr(st, "secrets") and st.secrets:
+                for k, v in st.secrets.items():
+                    if k.lower() == field_name.lower():
+                        return v, field_name, False
+        except Exception:
+            pass
+        return None, field_name, False
+
+    def __call__(self) -> dict[str, Any]:
+        data: dict[str, Any] = {}
+        try:
+            import streamlit as st
+            if hasattr(st, "secrets") and st.secrets:
+                for k, v in st.secrets.items():
+                    data[k.lower()] = v
+        except Exception:
+            pass
+        return data
+
+
 class Settings(BaseSettings):
     """Application-wide settings loaded from .env / environment."""
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=(str(PROJECT_ROOT / ".env"), ".env"),
         env_file_encoding="utf-8",
         extra="ignore",
     )
@@ -84,7 +114,13 @@ class Settings(BaseSettings):
             env_settings.decode_complex_value = _decode_complex_env_value
         if hasattr(dotenv_settings, "decode_complex_value"):
             dotenv_settings.decode_complex_value = _decode_complex_env_value
-        return (init_settings, env_settings, dotenv_settings, file_secret_settings)
+        return (
+            init_settings,
+            env_settings,
+            dotenv_settings,
+            file_secret_settings,
+            StreamlitSecretsSettingsSource(settings_cls),
+        )
 
     @field_validator("gemini_fallback_models", "cors_allowed_origins", "recovery_operator_emails", mode="before")
     @classmethod
@@ -210,6 +246,7 @@ class Settings(BaseSettings):
         "http://127.0.0.1:8501",
         "https://sdc2-copilot.streamlit.app",
     ]
+    streamlit_app_url: Optional[str] = ""
     api_request_timeout_seconds: float = 10.0
     api_max_query_limit: int = 100
     supabase_auth_issuer: Optional[str] = ""
@@ -339,11 +376,6 @@ class Settings(BaseSettings):
         if self.has_groq_key:
             return LLMProvider.GROQ
         return LLMProvider.TEMPLATE
-
-
-# ── Paths ──────────────────────────────────────────────
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-SAMPLE_DATA_DIR = PROJECT_ROOT / "sample-data"
 
 
 def get_settings() -> Settings:

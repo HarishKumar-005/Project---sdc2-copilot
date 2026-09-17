@@ -804,3 +804,45 @@ def test_worker_explanation_failure_isolation() -> None:
     assert cycle_result.records_held == 1
     assert cycle_result.explanation is None
 
+
+def test_service_groq_as_primary_provider(
+    suspicious_guardrail_decision: GuardrailDecision,
+) -> None:
+    """Ensure that when settings.llm_provider == 'groq', Groq is called first as primary."""
+    from src.scd2_copilot.config import LLMProvider
+
+    groq_res = BatchExplanationResult(
+        summary="Groq primary explanation.",
+        what_changed="Changed",
+        why_flagged="Suspicious volume",
+        evidence_points=["1 record changed"],
+        validation_summary="Validation passed",
+        containment_summary="Held in quarantine",
+        decision="SUSPICIOUS",
+        severity="HIGH",
+        provider="groq",
+        explanation_version="v1",
+        generated_at=datetime.now(timezone.utc),
+    )
+
+    mock_gemini = MagicMock(spec=BaseExplanationProvider)
+    mock_groq = MagicMock(spec=BaseExplanationProvider)
+    mock_groq.generate_explanation.return_value = groq_res
+
+    settings = Settings(llm_provider=LLMProvider.GROQ)
+    svc = ExplanationService(
+        settings=settings,
+        gemini_provider=mock_gemini,
+        groq_provider=mock_groq,
+    )
+    ctx = ExplanationContext.from_guardrail_decision(suspicious_guardrail_decision, source_name="test")
+
+    res = svc.explain_batch(ctx)
+
+    # Groq was called first and succeeded; Gemini was never called
+    assert mock_groq.generate_explanation.called
+    assert not mock_gemini.generate_explanation.called
+    assert res.provider == "groq"
+    assert res.summary == "Groq primary explanation."
+
+

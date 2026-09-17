@@ -8,7 +8,7 @@ from uuid import UUID
 
 import psycopg
 
-from ..config import Settings, get_settings
+from ..config import LLMProvider, Settings, get_settings
 from ..db.connection import DatabaseManager
 from ..db.repositories import HeldChangeBatchRepository
 from .grounding import validate_explanation_grounding
@@ -92,44 +92,39 @@ class ExplanationService:
 
         accumulated_warnings: list[str] = []
 
-        # 1. Primary: Gemini
-        if self.gemini_provider:
-            try:
-                res = self.gemini_provider.generate_explanation(context)
-                is_grounded, violations = validate_explanation_grounding(res, context)
-                if is_grounded:
-                    logger.info("Gemini generated grounded explanation for stream '%s'", context.source_name)
-                    return res
-                else:
-                    v_msgs = [f"{v.rule_name}: {v.description}" for v in violations]
-                    warn_msg = f"Gemini output rejected due to grounding failure: {'; '.join(v_msgs)}"
-                    logger.warning(warn_msg)
-                    accumulated_warnings.append(warn_msg)
-            except Exception as exc:
-                warn_msg = f"Gemini explanation provider failed: {type(exc).__name__}: {exc}"
-                logger.warning(warn_msg)
-                accumulated_warnings.append(warn_msg)
+        # Provider priority order based on settings.llm_provider
+        providers: list[tuple[str, BaseExplanationProvider]] = []
+        if self.settings.llm_provider == LLMProvider.GROQ:
+            if self.groq_provider:
+                providers.append(("Groq", self.groq_provider))
+            if self.gemini_provider:
+                providers.append(("Gemini", self.gemini_provider))
+        else:
+            if self.gemini_provider:
+                providers.append(("Gemini", self.gemini_provider))
+            if self.groq_provider:
+                providers.append(("Groq", self.groq_provider))
 
-        # 2. Secondary: Groq
-        if self.groq_provider:
+        for name, provider in providers:
             try:
-                logger.info("Attempting Groq fallback for explanation on stream '%s'", context.source_name)
-                res = self.groq_provider.generate_explanation(context)
+                logger.info("Attempting %s explanation for stream '%s'", name, context.source_name)
+                res = provider.generate_explanation(context)
                 is_grounded, violations = validate_explanation_grounding(res, context)
                 if is_grounded:
+                    logger.info("%s generated grounded explanation for stream '%s'", name, context.source_name)
                     res.warnings.extend(accumulated_warnings)
                     return res
                 else:
                     v_msgs = [f"{v.rule_name}: {v.description}" for v in violations]
-                    warn_msg = f"Groq output rejected due to grounding failure: {'; '.join(v_msgs)}"
+                    warn_msg = f"{name} output rejected due to grounding failure: {'; '.join(v_msgs)}"
                     logger.warning(warn_msg)
                     accumulated_warnings.append(warn_msg)
             except Exception as exc:
-                warn_msg = f"Groq explanation provider failed: {type(exc).__name__}: {exc}"
+                warn_msg = f"{name} explanation provider failed: {type(exc).__name__}: {exc}"
                 logger.warning(warn_msg)
                 accumulated_warnings.append(warn_msg)
 
-        # 3. Deterministic Template Fallback
+        # Fallback: Deterministic Template
         fallback_res = self.template_provider.generate_explanation(context)
         fallback_res.warnings.extend(accumulated_warnings)
         return fallback_res

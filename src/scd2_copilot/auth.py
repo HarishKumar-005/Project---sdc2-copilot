@@ -22,6 +22,7 @@ from uuid import UUID
 import streamlit as st
 
 from .auth_supabase import SupabaseAuthService, SupabaseSession, generate_pkce_pair
+from .config import get_settings
 
 logger = logging.getLogger("scd2_copilot.auth")
 
@@ -134,17 +135,27 @@ def get_current_user() -> Optional[AuthenticatedUser]:
 
 
 def get_current_request_origin() -> Optional[str]:
-    """Extract the current web origin (scheme + host) from Streamlit context if available."""
+    """Extract the current web origin (scheme + host) from Streamlit context or configuration."""
     try:
+        # 1. Explicit configuration in Settings (from .env or env var)
+        settings = get_settings()
+        if getattr(settings, "streamlit_app_url", None) and settings.streamlit_app_url.strip():
+            return settings.streamlit_app_url.strip().rstrip("/")
+
+        # 2. Explicit configuration in st.secrets
+        if hasattr(st, "secrets") and st.secrets:
+            app_url = st.secrets.get("STREAMLIT_APP_URL") or st.secrets.get("APP_URL")
+            if app_url and str(app_url).strip():
+                return str(app_url).strip().rstrip("/")
+
+        # 3. Streamlit context inspection (url or headers)
         if hasattr(st, "context"):
-            # Check st.context.url first
             ctx_url = getattr(st.context, "url", None)
             if ctx_url:
                 parsed = urlparse(ctx_url)
                 if parsed.scheme and parsed.netloc:
                     return f"{parsed.scheme}://{parsed.netloc}"
 
-            # Fall back to headers
             if hasattr(st.context, "headers"):
                 headers = st.context.headers
                 host = headers.get("x-forwarded-host") or headers.get("host")
