@@ -1,0 +1,1851 @@
+{
+  "metadata": {
+    "execution_timestamp": "2026-09-17T15:45:13.410336+00:00",
+    "python_version": "3.12.9",
+    "total_cases": 100,
+    "run1_duration_ms": 18.22,
+    "run2_duration_ms": 5.96,
+    "repeatability_verified": true,
+    "active_thresholds": {
+      "guardrail_enabled": true,
+      "guardrail_max_changed_records": 25,
+      "guardrail_max_affected_population_ratio": 0.8,
+      "guardrail_min_evaluated_records_for_ratio": 10,
+      "guardrail_max_quantity_relative_change": 3.0,
+      "guardrail_min_absolute_quantity_change": 50,
+      "guardrail_max_deactivation_count": 5,
+      "guardrail_max_changes_per_second": 50.0,
+      "guardrail_min_velocity_records": 10,
+      "guardrail_max_warehouses_affected": 5
+    }
+  },
+  "summary_metrics": {
+    "confusion_matrix": {
+      "true_positives": 50,
+      "true_negatives": 38,
+      "false_positives": 12,
+      "false_negatives": 0,
+      "total_evaluated": 100
+    },
+    "classification_metrics": {
+      "accuracy": 0.88,
+      "precision": 0.8065,
+      "recall": 1.0,
+      "specificity": 0.76,
+      "f1_score": 0.8929,
+      "false_positive_rate": 0.24,
+      "false_negative_rate": 0.0
+    },
+    "per_rule_triggers": {
+      "WIDE_GEOGRAPHIC_IMPACT": 48,
+      "LARGE_QUANTITY_SWING": 12,
+      "MASS_DEACTIVATION": 10,
+      "HIGH_CHANGE_VOLUME": 10,
+      "HIGH_CHANGE_VELOCITY": 1,
+      "HIGH_POPULATION_IMPACT": 11,
+      "SCD2_VALIDATION_FAILURE": 4
+    },
+    "latency_microseconds": {
+      "average": 147.75,
+      "min": 12.2,
+      "p50": 25.7,
+      "p95": 58.8,
+      "p99": 11927.9,
+      "max": 11927.9
+    }
+  },
+  "case_evaluations": [
+    {
+      "case_id": "CASE-001",
+      "description": "Minimal single-item quantity increase (100 -> 105, delta +5, rel 0.05)",
+      "category": "numeric_normal",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 61.5
+    },
+    {
+      "case_id": "CASE-002",
+      "description": "Small quantity decrease (200 -> 190, delta -10, rel 0.05)",
+      "category": "numeric_normal",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 29.2
+    },
+    {
+      "case_id": "CASE-003",
+      "description": "Multi-column normal change (qty 100 -> 110, reorder 30 -> 35)",
+      "category": "numeric_normal",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 21.9
+    },
+    {
+      "case_id": "CASE-004",
+      "description": "Moderate quantity increase below threshold (100 -> 250, delta +150, rel 1.50 <= 3.0)",
+      "category": "numeric_normal",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 16.5
+    },
+    {
+      "case_id": "CASE-005",
+      "description": "Exact threshold boundary for relative swing (100 -> 400, delta 300, rel 3.00 <= 3.0)",
+      "category": "boundary_below",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 18.3
+    },
+    {
+      "case_id": "CASE-006",
+      "description": "High relative change protected by absolute noise floor (2 -> 10, rel 4.0 > 3.0, delta 8 < 50)",
+      "category": "noise_floor",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 16.2
+    },
+    {
+      "case_id": "CASE-007",
+      "description": "High relative change protected by absolute noise floor (5 -> 35, rel 6.0 > 3.0, delta 30 < 50)",
+      "category": "noise_floor",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 14.8
+    },
+    {
+      "case_id": "CASE-008",
+      "description": "High relative change protected by absolute noise floor (10 -> 55, rel 4.5 > 3.0, delta 45 < 50)",
+      "category": "noise_floor",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 14.5
+    },
+    {
+      "case_id": "CASE-009",
+      "description": "Exact absolute noise boundary minus 1 (10 -> 59, rel 4.9 > 3.0, delta 49 < 50)",
+      "category": "boundary_below",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 13.8
+    },
+    {
+      "case_id": "CASE-010",
+      "description": "Pure unchanged micro-batch (5 records evaluated, 0 changed, 5 unchanged)",
+      "category": "no_changes",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 16.9
+    },
+    {
+      "case_id": "CASE-011",
+      "description": "Pure new records batch within limits (4 new records, 0 changed)",
+      "category": "new_records",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 15.4
+    },
+    {
+      "case_id": "CASE-012",
+      "description": "Mixed new and unchanged batch (2 new, 8 unchanged, 0 changed)",
+      "category": "mixed_normal",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 11927.9
+    },
+    {
+      "case_id": "CASE-013",
+      "description": "Single status deactivation (ACTIVE -> INACTIVE, count 1 <= 5)",
+      "category": "deactivation_normal",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 34.1
+    },
+    {
+      "case_id": "CASE-014",
+      "description": "Two status deactivations (ACTIVE -> INACTIVE, count 2 <= 5)",
+      "category": "deactivation_normal",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 28.0
+    },
+    {
+      "case_id": "CASE-015",
+      "description": "Four status deactivations (ACTIVE -> INACTIVE, count 4 <= 5)",
+      "category": "deactivation_normal",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 36.3
+    },
+    {
+      "case_id": "CASE-016",
+      "description": "Exact mass deactivation boundary (ACTIVE -> INACTIVE, count 5 <= 5)",
+      "category": "boundary_below",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 28.8
+    },
+    {
+      "case_id": "CASE-017",
+      "description": "Non-deactivation status transitions: PENDING -> ACTIVE (10 records, not a deactivation)",
+      "category": "categorical_normal",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": false,
+      "expected_rule": null,
+      "triggered_rules": [
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "MEDIUM",
+      "reasons": [
+        "Changes span 10 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 45.9
+    },
+    {
+      "case_id": "CASE-018",
+      "description": "Non-deactivation status transitions: INACTIVE -> ACTIVE (8 records, reactivation)",
+      "category": "categorical_normal",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": false,
+      "expected_rule": null,
+      "triggered_rules": [
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "MEDIUM",
+      "reasons": [
+        "Changes span 8 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 49.0
+    },
+    {
+      "case_id": "CASE-019",
+      "description": "Non-deactivation status transitions: ACTIVE -> IN_REVIEW (4 records, non-target status)",
+      "category": "categorical_normal",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 25.3
+    },
+    {
+      "case_id": "CASE-020",
+      "description": "Normal change volume (10 changed records <= 25)",
+      "category": "volume_normal",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": false,
+      "expected_rule": null,
+      "triggered_rules": [
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "MEDIUM",
+      "reasons": [
+        "Changes span 10 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 34.0
+    },
+    {
+      "case_id": "CASE-021",
+      "description": "Normal change volume (20 changed records <= 25)",
+      "category": "volume_normal",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": false,
+      "expected_rule": null,
+      "triggered_rules": [
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "MEDIUM",
+      "reasons": [
+        "Changes span 20 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 45.5
+    },
+    {
+      "case_id": "CASE-022",
+      "description": "Exact change volume boundary (25 changed records <= 25)",
+      "category": "boundary_below",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": false,
+      "expected_rule": null,
+      "triggered_rules": [
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "MEDIUM",
+      "reasons": [
+        "Changes span 25 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 43.4
+    },
+    {
+      "case_id": "CASE-023",
+      "description": "Population impact ratio well below threshold: 20 evaluated, 10 changed (ratio 0.50 <= 0.80)",
+      "category": "population_normal",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": false,
+      "expected_rule": null,
+      "triggered_rules": [
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "MEDIUM",
+      "reasons": [
+        "Changes span 10 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 27.0
+    },
+    {
+      "case_id": "CASE-024",
+      "description": "Population impact ratio below threshold: 15 evaluated, 11 changed (ratio 11/15 = 0.733 <= 0.80)",
+      "category": "population_normal",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": false,
+      "expected_rule": null,
+      "triggered_rules": [
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "MEDIUM",
+      "reasons": [
+        "Changes span 11 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 27.3
+    },
+    {
+      "case_id": "CASE-025",
+      "description": "Exact population impact ratio boundary: 20 evaluated, 16 changed (ratio 16/20 = 0.80 <= 0.80)",
+      "category": "boundary_below",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": false,
+      "expected_rule": null,
+      "triggered_rules": [
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "MEDIUM",
+      "reasons": [
+        "Changes span 16 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 32.4
+    },
+    {
+      "case_id": "CASE-026",
+      "description": "High ratio protected by min_evaluated guard: 5 evaluated, 5 changed (ratio 1.0, but evaluated 5 < 10)",
+      "category": "population_guard",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 19.5
+    },
+    {
+      "case_id": "CASE-027",
+      "description": "High ratio protected by min_evaluated guard: 8 evaluated, 8 changed (ratio 1.0, but evaluated 8 < 10)",
+      "category": "population_guard",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": false,
+      "expected_rule": null,
+      "triggered_rules": [
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "MEDIUM",
+      "reasons": [
+        "Changes span 8 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 25.9
+    },
+    {
+      "case_id": "CASE-028",
+      "description": "Single-record batch 100% changed (1 evaluated, 1 changed, evaluated 1 < 10)",
+      "category": "population_guard",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 14.2
+    },
+    {
+      "case_id": "CASE-029",
+      "description": "Geographic dispersion well within limits: changes across 2 warehouses (WH-1, WH-2 <= 5)",
+      "category": "geographic_normal",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 15.7
+    },
+    {
+      "case_id": "CASE-030",
+      "description": "Geographic dispersion within limits: changes across 4 warehouses (WH-1 to WH-4 <= 5)",
+      "category": "geographic_normal",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 19.0
+    },
+    {
+      "case_id": "CASE-031",
+      "description": "Exact geographic dispersion boundary: changes across 5 warehouses (WH-1 to WH-5 <= 5)",
+      "category": "boundary_below",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 19.3
+    },
+    {
+      "case_id": "CASE-032",
+      "description": "Reorder level decrease (80 -> 60, delta -20, rel 0.25 <= 3.0)",
+      "category": "numeric_normal",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 13.5
+    },
+    {
+      "case_id": "CASE-033",
+      "description": "Reorder level modest increase (50 -> 100, delta 50, rel 1.0 <= 3.0)",
+      "category": "numeric_normal",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 12.2
+    },
+    {
+      "case_id": "CASE-034",
+      "description": "Zero to small positive quantity (0 -> 30, delta 30 < 50 noise floor)",
+      "category": "noise_floor",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 13.2
+    },
+    {
+      "case_id": "CASE-035",
+      "description": "High starting volume with large absolute delta but small percentage (10000 -> 11500, delta 1500, rel 0.15 <= 3.0)",
+      "category": "numeric_normal",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 13.4
+    },
+    {
+      "case_id": "CASE-036",
+      "description": "Large starting quantity with modest decrease (5000 -> 4000, delta -1000, rel 0.20 <= 3.0)",
+      "category": "numeric_normal",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 13.6
+    },
+    {
+      "case_id": "CASE-037",
+      "description": "Multiple SKUs in single warehouse with varied small adjustments (6 SKUs in WH-1, all deltas < 20%)",
+      "category": "numeric_normal",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": false,
+      "expected_rule": null,
+      "triggered_rules": [
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "MEDIUM",
+      "reasons": [
+        "Changes span 6 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 25.7
+    },
+    {
+      "case_id": "CASE-038",
+      "description": "Generic monitor (pricing): price increase within bounds (price 15.00 -> 18.50, delta 3.50, rel 0.23 <= 3.0)",
+      "category": "generic_normal",
+      "domain": "pricing",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 15.4
+    },
+    {
+      "case_id": "CASE-039",
+      "description": "Generic monitor (pricing): price decrease (100.0 -> 85.0, delta -15.0, rel 0.15 <= 3.0)",
+      "category": "generic_normal",
+      "domain": "pricing",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 13.8
+    },
+    {
+      "case_id": "CASE-040",
+      "description": "Generic monitor (user tier): tier transition ('bronze' -> 'silver', 4 records)",
+      "category": "generic_normal",
+      "domain": "users",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 24.8
+    },
+    {
+      "case_id": "CASE-041",
+      "description": "Generic monitor (logistics): package weight change (weight 4.2 -> 5.1, delta 0.9, rel 0.21 <= 3.0)",
+      "category": "generic_normal",
+      "domain": "logistics",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 14.9
+    },
+    {
+      "case_id": "CASE-042",
+      "description": "Generic monitor (logistics): regional dispersion across 3 regions (<= 5)",
+      "category": "generic_normal",
+      "domain": "logistics",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 19.0
+    },
+    {
+      "case_id": "CASE-043",
+      "description": "Generic monitor (subscription): seat count increase (seats 20 -> 30, delta 10 < 50 noise floor)",
+      "category": "noise_floor",
+      "domain": "saas",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 13.8
+    },
+    {
+      "case_id": "CASE-044",
+      "description": "Wide event time window with low velocity (15 changes across 300 seconds = 0.05 changes/sec <= 50.0)",
+      "category": "velocity_normal",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": false,
+      "expected_rule": null,
+      "triggered_rules": [
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "MEDIUM",
+      "reasons": [
+        "Changes span 15 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 36.3
+    },
+    {
+      "case_id": "CASE-045",
+      "description": "Normal changes with explicit passing validation report (all 5 invariant rules PASS)",
+      "category": "validation_normal",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 14.7
+    },
+    {
+      "case_id": "CASE-046",
+      "description": "Large batch with low mutation rate (60 evaluated, 10 changed, 50 unchanged: ratio 16.7% <= 80%, vol 10 <= 25)",
+      "category": "population_normal",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": false,
+      "expected_rule": null,
+      "triggered_rules": [
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "MEDIUM",
+      "reasons": [
+        "Changes span 10 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 32.8
+    },
+    {
+      "case_id": "CASE-047",
+      "description": "Zero-delta update where values match (qty 100 -> 100, no actual delta)",
+      "category": "numeric_normal",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 13.8
+    },
+    {
+      "case_id": "CASE-048",
+      "description": "Combined categorical and small numeric change (status unchanged ACTIVE, qty 50 -> 65)",
+      "category": "numeric_normal",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 16.4
+    },
+    {
+      "case_id": "CASE-049",
+      "description": "Reorder level small bump with quantity decrease (reorder 30 -> 45, qty 200 -> 180)",
+      "category": "numeric_normal",
+      "domain": "inventory",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 14.7
+    },
+    {
+      "case_id": "CASE-050",
+      "description": "Generic monitor: multi-column user profile update (country 'US' -> 'CA', age 25 -> 26)",
+      "category": "generic_normal",
+      "domain": "users",
+      "expected_decision": "NORMAL",
+      "predicted_decision": "NORMAL",
+      "is_correct": true,
+      "expected_rule": null,
+      "triggered_rules": [],
+      "severity": "LOW",
+      "reasons": [
+        "All evaluated operational metrics within normal parameters."
+      ],
+      "latency_us": 17.0
+    },
+    {
+      "case_id": "CASE-051",
+      "description": "Just above relative threshold: qty 100 -> 405 (delta 305 >= 50, rel 3.05 > 3.0)",
+      "category": "quantity_swing",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "LARGE_QUANTITY_SWING",
+      "triggered_rules": [
+        "LARGE_QUANTITY_SWING"
+      ],
+      "severity": "MEDIUM",
+      "reasons": [
+        "Maximum quantity swing of 305.0% (abs: 305) exceeds relative threshold of 300.0% with absolute >= 50."
+      ],
+      "latency_us": 27.1
+    },
+    {
+      "case_id": "CASE-052",
+      "description": "Large quantity spike: qty 100 -> 550 (delta 450 >= 50, rel 4.5 > 3.0)",
+      "category": "quantity_swing",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "LARGE_QUANTITY_SWING",
+      "triggered_rules": [
+        "LARGE_QUANTITY_SWING"
+      ],
+      "severity": "MEDIUM",
+      "reasons": [
+        "Maximum quantity swing of 450.0% (abs: 450) exceeds relative threshold of 300.0% with absolute >= 50."
+      ],
+      "latency_us": 17.9
+    },
+    {
+      "case_id": "CASE-053",
+      "description": "Extreme 10x quantity surge: qty 50 -> 550 (delta 500 >= 50, rel 10.0 > 3.0)",
+      "category": "quantity_swing",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "LARGE_QUANTITY_SWING",
+      "triggered_rules": [
+        "LARGE_QUANTITY_SWING"
+      ],
+      "severity": "MEDIUM",
+      "reasons": [
+        "Maximum quantity swing of 1000.0% (abs: 500) exceeds relative threshold of 300.0% with absolute >= 50."
+      ],
+      "latency_us": 16.2
+    },
+    {
+      "case_id": "CASE-054",
+      "description": "Zero-to-large quantity spike: qty 0 -> 250 (delta 250 >= 50, rel 250.0 > 3.0)",
+      "category": "quantity_swing",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "LARGE_QUANTITY_SWING",
+      "triggered_rules": [
+        "LARGE_QUANTITY_SWING"
+      ],
+      "severity": "MEDIUM",
+      "reasons": [
+        "Maximum quantity swing of 25000.0% (abs: 250) exceeds relative threshold of 300.0% with absolute >= 50."
+      ],
+      "latency_us": 16.6
+    },
+    {
+      "case_id": "CASE-055",
+      "description": "Moderate baseline surge: qty 80 -> 400 (delta 320 >= 50, rel 4.0 > 3.0)",
+      "category": "quantity_swing",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "LARGE_QUANTITY_SWING",
+      "triggered_rules": [
+        "LARGE_QUANTITY_SWING"
+      ],
+      "severity": "MEDIUM",
+      "reasons": [
+        "Maximum quantity swing of 400.0% (abs: 320) exceeds relative threshold of 300.0% with absolute >= 50."
+      ],
+      "latency_us": 17.8
+    },
+    {
+      "case_id": "CASE-056",
+      "description": "Reorder level surge: reorder 20 -> 120 (delta 100 >= 50, rel 5.0 > 3.0)",
+      "category": "quantity_swing",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "LARGE_QUANTITY_SWING",
+      "triggered_rules": [
+        "LARGE_QUANTITY_SWING"
+      ],
+      "severity": "MEDIUM",
+      "reasons": [
+        "Maximum quantity swing of 500.0% (abs: 100) exceeds relative threshold of 300.0% with absolute >= 50."
+      ],
+      "latency_us": 16.2
+    },
+    {
+      "case_id": "CASE-057",
+      "description": "Generic monitor price surge: price 10.0 -> 75.0 (delta 65.0 >= 50, rel 6.5 > 3.0)",
+      "category": "quantity_swing",
+      "domain": "pricing",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "LARGE_QUANTITY_SWING",
+      "triggered_rules": [
+        "LARGE_QUANTITY_SWING"
+      ],
+      "severity": "MEDIUM",
+      "reasons": [
+        "Maximum quantity swing of 650.0% (abs: 65) exceeds relative threshold of 300.0% with absolute >= 50."
+      ],
+      "latency_us": 16.7
+    },
+    {
+      "case_id": "CASE-058",
+      "description": "Generic monitor asset valuation surge: val 50 -> 350 (delta 300 >= 50, rel 6.0 > 3.0)",
+      "category": "quantity_swing",
+      "domain": "assets",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "LARGE_QUANTITY_SWING",
+      "triggered_rules": [
+        "LARGE_QUANTITY_SWING"
+      ],
+      "severity": "MEDIUM",
+      "reasons": [
+        "Maximum quantity swing of 600.0% (abs: 300) exceeds relative threshold of 300.0% with absolute >= 50."
+      ],
+      "latency_us": 19.2
+    },
+    {
+      "case_id": "CASE-059",
+      "description": "Inventory spike on low-stock item: qty 20 -> 200 (delta 180 >= 50, rel 9.0 > 3.0)",
+      "category": "quantity_swing",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "LARGE_QUANTITY_SWING",
+      "triggered_rules": [
+        "LARGE_QUANTITY_SWING"
+      ],
+      "severity": "MEDIUM",
+      "reasons": [
+        "Maximum quantity swing of 900.0% (abs: 180) exceeds relative threshold of 300.0% with absolute >= 50."
+      ],
+      "latency_us": 16.3
+    },
+    {
+      "case_id": "CASE-060",
+      "description": "Simultaneous multi-SKU quantity surges (2 SKUs both with >400% surge and abs > 100)",
+      "category": "quantity_swing",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "LARGE_QUANTITY_SWING",
+      "triggered_rules": [
+        "LARGE_QUANTITY_SWING"
+      ],
+      "severity": "MEDIUM",
+      "reasons": [
+        "Maximum quantity swing of 500.0% (abs: 500) exceeds relative threshold of 300.0% with absolute >= 50."
+      ],
+      "latency_us": 20.2
+    },
+    {
+      "case_id": "CASE-061",
+      "description": "Just above deactivation threshold: 6 deactivations (ACTIVE -> INACTIVE, limit is 5)",
+      "category": "mass_deactivation",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "MASS_DEACTIVATION",
+      "triggered_rules": [
+        "MASS_DEACTIVATION",
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "HIGH",
+      "reasons": [
+        "Batch contains 6 deactivations, exceeding safe limit of 5.",
+        "Changes span 6 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 45.1
+    },
+    {
+      "case_id": "CASE-062",
+      "description": "Moderate deactivations: 8 deactivations (ACTIVE -> INACTIVE)",
+      "category": "mass_deactivation",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "MASS_DEACTIVATION",
+      "triggered_rules": [
+        "MASS_DEACTIVATION",
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "HIGH",
+      "reasons": [
+        "Batch contains 8 deactivations, exceeding safe limit of 5.",
+        "Changes span 8 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 37.4
+    },
+    {
+      "case_id": "CASE-063",
+      "description": "Severe deactivations: 12 deactivations (ACTIVE -> INACTIVE)",
+      "category": "mass_deactivation",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "MASS_DEACTIVATION",
+      "triggered_rules": [
+        "MASS_DEACTIVATION",
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "HIGH",
+      "reasons": [
+        "Batch contains 12 deactivations, exceeding safe limit of 5.",
+        "Changes span 12 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 43.1
+    },
+    {
+      "case_id": "CASE-064",
+      "description": "Discontinuation wave: 7 deactivations (ACTIVE -> DISCONTINUED)",
+      "category": "mass_deactivation",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "MASS_DEACTIVATION",
+      "triggered_rules": [
+        "MASS_DEACTIVATION",
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "HIGH",
+      "reasons": [
+        "Batch contains 7 deactivations, exceeding safe limit of 5.",
+        "Changes span 7 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 33.7
+    },
+    {
+      "case_id": "CASE-065",
+      "description": "Mixed deactivation targets: 8 deactivations (4 INACTIVE, 2 DISCONTINUED, 2 CLOSED)",
+      "category": "mass_deactivation",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "MASS_DEACTIVATION",
+      "triggered_rules": [
+        "MASS_DEACTIVATION",
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "HIGH",
+      "reasons": [
+        "Batch contains 8 deactivations, exceeding safe limit of 5.",
+        "Changes span 8 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 37.4
+    },
+    {
+      "case_id": "CASE-066",
+      "description": "Decommissioning batch: 7 items transitioning to DECOMMISSIONED",
+      "category": "mass_deactivation",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "MASS_DEACTIVATION",
+      "triggered_rules": [
+        "MASS_DEACTIVATION",
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "HIGH",
+      "reasons": [
+        "Batch contains 7 deactivations, exceeding safe limit of 5.",
+        "Changes span 7 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 32.4
+    },
+    {
+      "case_id": "CASE-067",
+      "description": "Contract terminations: 6 items transitioning to CANCELLED",
+      "category": "mass_deactivation",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "MASS_DEACTIVATION",
+      "triggered_rules": [
+        "MASS_DEACTIVATION",
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "HIGH",
+      "reasons": [
+        "Batch contains 6 deactivations, exceeding safe limit of 5.",
+        "Changes span 6 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 29.1
+    },
+    {
+      "case_id": "CASE-068",
+      "description": "Generic monitor mass deactivation: 8 user accounts set to INACTIVE",
+      "category": "mass_deactivation",
+      "domain": "users",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "MASS_DEACTIVATION",
+      "triggered_rules": [
+        "MASS_DEACTIVATION",
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "HIGH",
+      "reasons": [
+        "Batch contains 8 deactivations, exceeding safe limit of 5.",
+        "Changes span 8 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 32.8
+    },
+    {
+      "case_id": "CASE-069",
+      "description": "Just above change volume threshold: 26 changed records (limit is 25)",
+      "category": "change_volume",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "HIGH_CHANGE_VOLUME",
+      "triggered_rules": [
+        "HIGH_CHANGE_VOLUME",
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "HIGH",
+      "reasons": [
+        "Batch contains 26 changed records, exceeding threshold of 25.",
+        "Changes span 26 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 45.4
+    },
+    {
+      "case_id": "CASE-070",
+      "description": "Moderate change volume: 30 changed records",
+      "category": "change_volume",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "HIGH_CHANGE_VOLUME",
+      "triggered_rules": [
+        "HIGH_CHANGE_VOLUME",
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "HIGH",
+      "reasons": [
+        "Batch contains 30 changed records, exceeding threshold of 25.",
+        "Changes span 30 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 47.5
+    },
+    {
+      "case_id": "CASE-071",
+      "description": "Large batch volume: 40 changed records",
+      "category": "change_volume",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "HIGH_CHANGE_VOLUME",
+      "triggered_rules": [
+        "HIGH_CHANGE_VOLUME",
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "HIGH",
+      "reasons": [
+        "Batch contains 40 changed records, exceeding threshold of 25.",
+        "Changes span 40 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 58.8
+    },
+    {
+      "case_id": "CASE-072",
+      "description": "Extreme volume: 75 changed records",
+      "category": "change_volume",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "HIGH_CHANGE_VOLUME",
+      "triggered_rules": [
+        "HIGH_CHANGE_VELOCITY",
+        "HIGH_CHANGE_VOLUME",
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "HIGH",
+      "reasons": [
+        "Change velocity of 75.0 changes/sec exceeds threshold of 50.0 changes/sec.",
+        "Batch contains 75 changed records, exceeding threshold of 25.",
+        "Changes span 75 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 111.1
+    },
+    {
+      "case_id": "CASE-073",
+      "description": "High volume with small individual deltas (28 records, each +2 units)",
+      "category": "change_volume",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "HIGH_CHANGE_VOLUME",
+      "triggered_rules": [
+        "HIGH_CHANGE_VOLUME",
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "HIGH",
+      "reasons": [
+        "Batch contains 28 changed records, exceeding threshold of 25.",
+        "Changes span 28 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 48.1
+    },
+    {
+      "case_id": "CASE-074",
+      "description": "High volume across single warehouse (30 records in WH-1)",
+      "category": "change_volume",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "HIGH_CHANGE_VOLUME",
+      "triggered_rules": [
+        "HIGH_CHANGE_VOLUME",
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "HIGH",
+      "reasons": [
+        "Batch contains 30 changed records, exceeding threshold of 25.",
+        "Changes span 30 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 47.3
+    },
+    {
+      "case_id": "CASE-075",
+      "description": "Generic monitor high change volume: 30 price updates in single batch",
+      "category": "change_volume",
+      "domain": "pricing",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "HIGH_CHANGE_VOLUME",
+      "triggered_rules": [
+        "HIGH_CHANGE_VOLUME",
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "HIGH",
+      "reasons": [
+        "Batch contains 30 changed records, exceeding threshold of 25.",
+        "Changes span 30 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 46.7
+    },
+    {
+      "case_id": "CASE-076",
+      "description": "Generic monitor high change volume: 40 user profile updates",
+      "category": "change_volume",
+      "domain": "users",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "HIGH_CHANGE_VOLUME",
+      "triggered_rules": [
+        "HIGH_CHANGE_VOLUME",
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "HIGH",
+      "reasons": [
+        "Batch contains 40 changed records, exceeding threshold of 25.",
+        "Changes span 40 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 53.5
+    },
+    {
+      "case_id": "CASE-077",
+      "description": "Just above population ratio threshold: 10 evaluated, 9 changed (ratio 0.90 > 0.80, eval >= 10)",
+      "category": "population_impact",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "HIGH_POPULATION_IMPACT",
+      "triggered_rules": [
+        "HIGH_POPULATION_IMPACT",
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "HIGH",
+      "reasons": [
+        "Batch mutation ratio of 90.0% (9/10) exceeds threshold of 80.0%.",
+        "Changes span 9 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 29.2
+    },
+    {
+      "case_id": "CASE-078",
+      "description": "Complete mutation of evaluated batch: 12 evaluated, 12 changed (ratio 1.00 > 0.80, eval >= 10)",
+      "category": "population_impact",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "HIGH_POPULATION_IMPACT",
+      "triggered_rules": [
+        "HIGH_POPULATION_IMPACT",
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "HIGH",
+      "reasons": [
+        "Batch mutation ratio of 100.0% (12/12) exceeds threshold of 80.0%.",
+        "Changes span 12 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 31.1
+    },
+    {
+      "case_id": "CASE-079",
+      "description": "15 evaluated, 13 changed (ratio 13/15 = 0.867 > 0.80)",
+      "category": "population_impact",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "HIGH_POPULATION_IMPACT",
+      "triggered_rules": [
+        "HIGH_POPULATION_IMPACT",
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "HIGH",
+      "reasons": [
+        "Batch mutation ratio of 86.7% (13/15) exceeds threshold of 80.0%.",
+        "Changes span 13 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 31.7
+    },
+    {
+      "case_id": "CASE-080",
+      "description": "20 evaluated, 18 changed (ratio 18/20 = 0.90 > 0.80)",
+      "category": "population_impact",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "HIGH_POPULATION_IMPACT",
+      "triggered_rules": [
+        "HIGH_POPULATION_IMPACT",
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "HIGH",
+      "reasons": [
+        "Batch mutation ratio of 90.0% (18/20) exceeds threshold of 80.0%.",
+        "Changes span 18 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 35.0
+    },
+    {
+      "case_id": "CASE-081",
+      "description": "25 evaluated, 22 changed (ratio 22/25 = 0.88 > 0.80, volume 22 <= 25)",
+      "category": "population_impact",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "HIGH_POPULATION_IMPACT",
+      "triggered_rules": [
+        "HIGH_POPULATION_IMPACT",
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "HIGH",
+      "reasons": [
+        "Batch mutation ratio of 88.0% (22/25) exceeds threshold of 80.0%.",
+        "Changes span 22 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 51.1
+    },
+    {
+      "case_id": "CASE-082",
+      "description": "20 evaluated, 17 changed (ratio 17/20 = 0.85 > 0.80)",
+      "category": "population_impact",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "HIGH_POPULATION_IMPACT",
+      "triggered_rules": [
+        "HIGH_POPULATION_IMPACT",
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "HIGH",
+      "reasons": [
+        "Batch mutation ratio of 85.0% (17/20) exceeds threshold of 80.0%.",
+        "Changes span 17 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 37.6
+    },
+    {
+      "case_id": "CASE-083",
+      "description": "Generic monitor population impact: 10 evaluated, 9 changed (ratio 90% > 80%)",
+      "category": "population_impact",
+      "domain": "pricing",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "HIGH_POPULATION_IMPACT",
+      "triggered_rules": [
+        "HIGH_POPULATION_IMPACT",
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "HIGH",
+      "reasons": [
+        "Batch mutation ratio of 90.0% (9/10) exceeds threshold of 80.0%.",
+        "Changes span 9 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 30.0
+    },
+    {
+      "case_id": "CASE-084",
+      "description": "Generic monitor population impact: 16 evaluated, 14 changed (ratio 87.5% > 80%)",
+      "category": "population_impact",
+      "domain": "users",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "HIGH_POPULATION_IMPACT",
+      "triggered_rules": [
+        "HIGH_POPULATION_IMPACT",
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "HIGH",
+      "reasons": [
+        "Batch mutation ratio of 87.5% (14/16) exceeds threshold of 80.0%.",
+        "Changes span 14 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 46.4
+    },
+    {
+      "case_id": "CASE-085",
+      "description": "Just above geographic threshold: 6 distinct warehouses (WH-1 to WH-6, limit is 5)",
+      "category": "geographic_impact",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "WIDE_GEOGRAPHIC_IMPACT",
+      "triggered_rules": [
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "MEDIUM",
+      "reasons": [
+        "Changes span 6 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 24.6
+    },
+    {
+      "case_id": "CASE-086",
+      "description": "Moderate geographic dispersion: 8 distinct warehouses (WH-1 to WH-8)",
+      "category": "geographic_impact",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "WIDE_GEOGRAPHIC_IMPACT",
+      "triggered_rules": [
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "MEDIUM",
+      "reasons": [
+        "Changes span 8 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 25.7
+    },
+    {
+      "case_id": "CASE-087",
+      "description": "Wide geographic dispersion: 12 distinct warehouses",
+      "category": "geographic_impact",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "WIDE_GEOGRAPHIC_IMPACT",
+      "triggered_rules": [
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "MEDIUM",
+      "reasons": [
+        "Changes span 12 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 28.3
+    },
+    {
+      "case_id": "CASE-088",
+      "description": "Distributed single-item changes: 7 distinct warehouses with 1 SKU each",
+      "category": "geographic_impact",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "WIDE_GEOGRAPHIC_IMPACT",
+      "triggered_rules": [
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "MEDIUM",
+      "reasons": [
+        "Changes span 7 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 23.8
+    },
+    {
+      "case_id": "CASE-089",
+      "description": "6 distinct warehouses with modest quantity increases",
+      "category": "geographic_impact",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "WIDE_GEOGRAPHIC_IMPACT",
+      "triggered_rules": [
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "MEDIUM",
+      "reasons": [
+        "Changes span 6 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 22.6
+    },
+    {
+      "case_id": "CASE-090",
+      "description": "Generic monitor key dispersion: 6 distinct regions (region-1 to region-6 > 5)",
+      "category": "geographic_impact",
+      "domain": "logistics",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "WIDE_GEOGRAPHIC_IMPACT",
+      "triggered_rules": [
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "MEDIUM",
+      "reasons": [
+        "Changes span 6 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 23.6
+    },
+    {
+      "case_id": "CASE-091",
+      "description": "Generic monitor key dispersion: 8 distinct supplier IDs",
+      "category": "geographic_impact",
+      "domain": "suppliers",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "WIDE_GEOGRAPHIC_IMPACT",
+      "triggered_rules": [
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "MEDIUM",
+      "reasons": [
+        "Changes span 8 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 25.4
+    },
+    {
+      "case_id": "CASE-092",
+      "description": "Generic monitor key dispersion: 10 distinct branch IDs",
+      "category": "geographic_impact",
+      "domain": "branches",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "WIDE_GEOGRAPHIC_IMPACT",
+      "triggered_rules": [
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "MEDIUM",
+      "reasons": [
+        "Changes span 10 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 25.6
+    },
+    {
+      "case_id": "CASE-093",
+      "description": "Overlapping temporal validity intervals in validation report",
+      "category": "scd2_validation",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "SCD2_VALIDATION_FAILURE",
+      "triggered_rules": [
+        "SCD2_VALIDATION_FAILURE"
+      ],
+      "severity": "CRITICAL",
+      "reasons": [
+        "SCD2 validation failed: Rule 5 failed: Overlapping temporal validity intervals detected for key ('SKU-1', 'WH-1')"
+      ],
+      "latency_us": 22.2
+    },
+    {
+      "case_id": "CASE-094",
+      "description": "Duplicate active current rows in validation report",
+      "category": "scd2_validation",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "SCD2_VALIDATION_FAILURE",
+      "triggered_rules": [
+        "SCD2_VALIDATION_FAILURE"
+      ],
+      "severity": "CRITICAL",
+      "reasons": [
+        "SCD2 validation failed: Rule 1 failed: Multiple active current versions (is_current=True) found for key ('SKU-2', 'WH-1')"
+      ],
+      "latency_us": 17.6
+    },
+    {
+      "case_id": "CASE-095",
+      "description": "Null business key detected in SCD2 output",
+      "category": "scd2_validation",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "SCD2_VALIDATION_FAILURE",
+      "triggered_rules": [
+        "SCD2_VALIDATION_FAILURE"
+      ],
+      "severity": "CRITICAL",
+      "reasons": [
+        "SCD2 validation failed: Rule 2 failed: NULL value detected in business key column 'sku_id'"
+      ],
+      "latency_us": 15.5
+    },
+    {
+      "case_id": "CASE-096",
+      "description": "Zero-duration interval where effective_from == effective_to",
+      "category": "scd2_validation",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "SCD2_VALIDATION_FAILURE",
+      "triggered_rules": [
+        "SCD2_VALIDATION_FAILURE"
+      ],
+      "severity": "CRITICAL",
+      "reasons": [
+        "SCD2 validation failed: Rule 4 failed: Zero-duration or reversed validity interval [2026-06-01, 2026-06-01)"
+      ],
+      "latency_us": 14.8
+    },
+    {
+      "case_id": "CASE-097",
+      "description": "High Volume + High Population: 30 evaluated, 28 changed (vol 28 > 25, ratio 28/30 = 0.933 > 0.80)",
+      "category": "multi_rule",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "HIGH_CHANGE_VOLUME",
+      "triggered_rules": [
+        "HIGH_CHANGE_VOLUME",
+        "HIGH_POPULATION_IMPACT",
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "HIGH",
+      "reasons": [
+        "Batch contains 28 changed records, exceeding threshold of 25.",
+        "Batch mutation ratio of 93.3% (28/30) exceeds threshold of 80.0%.",
+        "Changes span 28 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 53.2
+    },
+    {
+      "case_id": "CASE-098",
+      "description": "Large Swing + Wide Geographic: 6 warehouses, max swing 500% with abs 400",
+      "category": "multi_rule",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "LARGE_QUANTITY_SWING",
+      "triggered_rules": [
+        "LARGE_QUANTITY_SWING",
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "HIGH",
+      "reasons": [
+        "Maximum quantity swing of 400.0% (abs: 400) exceeds relative threshold of 300.0% with absolute >= 50.",
+        "Changes span 6 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 30.1
+    },
+    {
+      "case_id": "CASE-099",
+      "description": "Mass Deactivation + High Population: 12 evaluated, 11 deactivations (deact 11 > 5, ratio 11/12 = 0.917 > 0.80)",
+      "category": "multi_rule",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "MASS_DEACTIVATION",
+      "triggered_rules": [
+        "HIGH_POPULATION_IMPACT",
+        "MASS_DEACTIVATION",
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "HIGH",
+      "reasons": [
+        "Batch mutation ratio of 91.7% (11/12) exceeds threshold of 80.0%.",
+        "Batch contains 11 deactivations, exceeding safe limit of 5.",
+        "Changes span 11 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 46.2
+    },
+    {
+      "case_id": "CASE-100",
+      "description": "Quadruple rule trigger: 30 evaluated, 28 changed across 7 warehouses with 600% swing (abs 500) and 7 deactivations",
+      "category": "multi_rule",
+      "domain": "inventory",
+      "expected_decision": "SUSPICIOUS",
+      "predicted_decision": "SUSPICIOUS",
+      "is_correct": true,
+      "expected_rule": "HIGH_CHANGE_VOLUME",
+      "triggered_rules": [
+        "HIGH_CHANGE_VOLUME",
+        "HIGH_POPULATION_IMPACT",
+        "LARGE_QUANTITY_SWING",
+        "MASS_DEACTIVATION",
+        "WIDE_GEOGRAPHIC_IMPACT"
+      ],
+      "severity": "HIGH",
+      "reasons": [
+        "Batch contains 28 changed records, exceeding threshold of 25.",
+        "Batch mutation ratio of 93.3% (28/30) exceeds threshold of 80.0%.",
+        "Maximum quantity swing of 500.0% (abs: 500) exceeds relative threshold of 300.0% with absolute >= 50.",
+        "Batch contains 7 deactivations, exceeding safe limit of 5.",
+        "Changes span 28 distinct warehouses, exceeding threshold of 5."
+      ],
+      "latency_us": 73.6
+    }
+  ]
+}

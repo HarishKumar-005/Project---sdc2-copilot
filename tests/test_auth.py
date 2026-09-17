@@ -12,6 +12,8 @@ import polars as pl
 import pytest
 import streamlit as st
 
+from uuid import UUID, uuid4
+
 from src.scd2_copilot.artifacts import (
     RunMetadata,
     list_runs,
@@ -20,12 +22,22 @@ from src.scd2_copilot.artifacts import (
 )
 from src.scd2_copilot.auth import (
     AuthenticatedUser,
+    build_google_login_url,
+    clear_all_transactions_for_testing,
+    consume_oauth_transaction,
     get_current_request_origin,
+    get_current_supabase_session,
     get_current_user,
+    get_pending_transactions_count,
+    get_supabase_access_token,
+    handle_auth_callback,
     is_auth_configured,
     is_user_logged_in,
-    sync_redirect_uri_with_host,
+    set_current_supabase_session,
+    store_oauth_transaction,
+    trigger_logout,
 )
+from src.scd2_copilot.auth_supabase import SupabaseSession, generate_pkce_pair
 from src.scd2_copilot.config import Settings
 from src.scd2_copilot.models import (
     ChangeRecord,
@@ -43,36 +55,18 @@ from src.scd2_copilot.models import (
 from src.scd2_copilot.workflow import run_pipeline
 
 
-class DummyUserInfo:
-    """Mock st.user proxy object for unit testing."""
-
-    def __init__(self, data: dict[str, Any]):
-        self._data = data
-
-    def __getattr__(self, name: str) -> Any:
-        if name in self._data:
-            return self._data[name]
-        raise AttributeError(f"No attribute {name}")
-
-    def get(self, key: str, default: Any = None) -> Any:
-        return self._data.get(key, default)
-
-    def to_dict(self) -> dict[str, Any]:
-        return dict(self._data)
-
-
 # ── 1. AuthenticatedUser Model Tests ─────────────────────────
 
 
 def test_authenticated_user_immutability():
     """AuthenticatedUser is frozen and immutable."""
     user = AuthenticatedUser(
-        provider="google",
+        provider="supabase",
         subject="sub_12345",
         email="alice@example.com",
         name="Alice Doe",
     )
-    assert user.provider == "google"
+    assert user.provider == "supabase"
     assert user.subject == "sub_12345"
     assert user.email == "alice@example.com"
     assert user.name == "Alice Doe"
@@ -84,14 +78,14 @@ def test_authenticated_user_immutability():
 def test_authenticated_user_to_audit_dict():
     """to_audit_dict returns only sanitized identity claims, no tokens or excess fields."""
     user = AuthenticatedUser(
-        provider="google",
+        provider="supabase",
         subject="sub_12345",
         email="alice@example.com",
         name="Alice Doe",
     )
     audit = user.to_audit_dict()
     assert audit == {
-        "provider": "google",
+        "provider": "supabase",
         "subject": "sub_12345",
         "email": "alice@example.com",
         "name": "Alice Doe",
@@ -106,7 +100,7 @@ def test_authenticated_user_to_audit_dict():
 def test_authenticated_user_from_dict():
     """from_dict safely constructs AuthenticatedUser or returns None on invalid inputs."""
     data = {
-        "provider": "google",
+        "provider": "supabase",
         "subject": "sub_987",
         "email": "bob@example.com",
         "name": "Bob Smith",
@@ -120,61 +114,306 @@ def test_authenticated_user_from_dict():
     assert AuthenticatedUser.from_dict({}) is None
 
 
-# ── 2. Claims Extraction & Login State Tests ─────────────────
+# ── 2. Supabase Session & Login State Tests ─────────────────
 
 
 def test_unauthenticated_state():
-    """Unauthenticated st.user returns False for is_user_logged_in and None for get_current_user."""
-    mock_proxy = DummyUserInfo({"is_logged_in": False})
-    with patch.object(st, "user", mock_proxy):
-        assert is_user_logged_in() is False
-        assert get_current_user() is None
+    """Unauthenticated state returns False for is_user_logged_in and None for get_current_user."""
+    set_current_supabase_session(None)
+    assert is_user_logged_in() is False
+    assert get_current_user() is None
+    assert get_supabase_access_token() is None
 
 
 def test_authenticated_state_full_claims():
-    """Authenticated st.user parses full claims into AuthenticatedUser."""
-    mock_proxy = DummyUserInfo({
-        "is_logged_in": True,
-        "sub": "google_sub_1001",
-        "email": "analyst@corp.com",
-        "name": "Data Analyst",
-    })
-    with patch.object(st, "user", mock_proxy):
+    """Active Supabase session provides authenticated identity and access token."""
+    user_id = uuid4()
+    mock_session = SupabaseSession(
+        access_token="supabase_jwt_access_123",
+        user_id=user_id,
+        email="analyst@corp.com",
+        user_metadata={"full_name": "Data Analyst"},
+    )
+    set_current_supabase_session(mock_session)
+
+    try:
         assert is_user_logged_in() is True
         user = get_current_user()
         assert user is not None
-        assert user.provider == "google"
-        assert user.subject == "google_sub_1001"
+        assert user.provider == "supabase"
+        assert user.subject == str(user_id)
         assert user.email == "analyst@corp.com"
         assert user.name == "Data Analyst"
+        assert get_supabase_access_token() == "supabase_jwt_access_123"
+    finally:
+        set_current_supabase_session(None)
 
 
 def test_authenticated_state_missing_optional_claims():
-    """Authenticated st.user handles missing name and email without crashing."""
-    mock_proxy = DummyUserInfo({
-        "is_logged_in": True,
-        "sub": "google_sub_1002",
-        # email and name omitted
-    })
-    with patch.object(st, "user", mock_proxy):
+    """Active Supabase session handles missing user metadata gracefully."""
+    user_id = uuid4()
+    mock_session = SupabaseSession(
+        access_token="supabase_jwt_access_456",
+        user_id=user_id,
+        email=None,
+        user_metadata={},
+    )
+    set_current_supabase_session(mock_session)
+
+    try:
         assert is_user_logged_in() is True
         user = get_current_user()
         assert user is not None
-        assert user.subject == "google_sub_1002"
+        assert user.subject == str(user_id)
         assert user.email is None
-        assert user.name is None
+        assert user.name == str(user_id)
+    finally:
+        set_current_supabase_session(None)
 
 
 def test_auth_configured_check():
-    """is_auth_configured detects presence or absence of [auth] in st.secrets."""
-    with patch.object(st, "secrets", {}):
+    """is_auth_configured detects configuration of Supabase Auth."""
+    with patch("src.scd2_copilot.auth.SupabaseAuthService") as mock_svc_cls:
+        mock_instance = mock_svc_cls.return_value
+        mock_instance.is_configured = True
+        assert is_auth_configured() is True
+
+        mock_instance.is_configured = False
         assert is_auth_configured() is False
 
-    with patch.object(st, "secrets", {"auth": {"client_id": "cid", "client_secret": "csec"}}):
-        assert is_auth_configured() is True
 
-    with patch.object(st, "secrets", {"auth": {"google": {"client_id": "cid", "client_secret": "csec"}}}):
-        assert is_auth_configured() is True
+def test_pkce_generation():
+    """generate_pkce_pair produces cryptographically valid verifier and challenge."""
+    verifier, challenge = generate_pkce_pair()
+    assert isinstance(verifier, str)
+    assert len(verifier) >= 43
+    assert isinstance(challenge, str)
+    assert len(challenge) > 0
+    assert "=" not in challenge  # Base64URL unpadded
+
+
+def test_build_google_login_url():
+    """build_google_login_url constructs Supabase Google OAuth URL with state nonce and NO verifier in URL."""
+    clear_all_transactions_for_testing()
+    with patch("src.scd2_copilot.auth.SupabaseAuthService") as mock_svc_cls:
+        mock_instance = mock_svc_cls.return_value
+        mock_instance.is_configured = True
+        mock_instance.build_google_oauth_url.return_value = "https://example.supabase.co/auth/v1/authorize?provider=google&state=abc"
+
+        url = build_google_login_url(redirect_to="http://localhost:8501")
+        assert "authorize?provider=google" in url
+        # Verify spkce is NEVER in redirect or URL
+        assert "spkce" not in url
+        # Verify transaction state was recorded in session state and server store
+        assert "pending_oauth_state" in st.session_state
+        state = st.session_state["pending_oauth_state"]
+        assert get_pending_transactions_count() == 1
+
+        # Verify call to service included code_challenge and state
+        call_kwargs = mock_instance.build_google_oauth_url.call_args.kwargs
+        assert "code_challenge" in call_kwargs
+        assert call_kwargs["state"] == state
+        assert call_kwargs["redirect_to"] == "http://localhost:8501"
+
+
+def test_handle_auth_callback_code_exchange():
+    """handle_auth_callback exchanges code parameter for session using bound state and clears query params."""
+    clear_all_transactions_for_testing()
+    user_id = uuid4()
+    mock_session = SupabaseSession(
+        access_token="token_exchanged_789",
+        user_id=user_id,
+        email="operator@test.com",
+    )
+
+    state = "valid_oauth_state_nonce_123"
+    code_verifier = "test_code_verifier_xyz_secure_random"
+    store_oauth_transaction(state=state, code_verifier=code_verifier, origin="http://localhost:8501")
+
+    st.query_params["code"] = "auth_code_mock_123"
+    st.query_params["state"] = state
+    st.session_state["pending_oauth_state"] = state
+
+    with patch("src.scd2_copilot.auth.SupabaseAuthService") as mock_svc_cls, patch.object(st, "rerun"):
+        mock_instance = mock_svc_cls.return_value
+        mock_instance.exchange_code_for_session.return_value = mock_session
+
+        res = handle_auth_callback()
+        assert res == mock_session
+        assert is_user_logged_in() is True
+        assert "code" not in st.query_params
+        assert "state" not in st.query_params
+        assert "pending_oauth_state" not in st.session_state
+
+        # Verify transaction was atomically consumed (one-time use)
+        assert consume_oauth_transaction(state) is None
+
+    set_current_supabase_session(None)
+
+
+def test_handle_auth_callback_missing_state_rejected():
+    """handle_auth_callback fails closed when callback lacks state and store is empty."""
+    clear_all_transactions_for_testing()
+    st.query_params["code"] = "orphan_auth_code_without_state"
+    st.session_state.pop("pending_oauth_state", None)
+
+    with patch("src.scd2_copilot.auth.SupabaseAuthService") as mock_svc_cls:
+        mock_instance = mock_svc_cls.return_value
+        res = handle_auth_callback()
+        assert res is None
+        assert not is_user_logged_in()
+        assert "code" not in st.query_params
+        assert "auth_error" in st.session_state
+
+
+def test_handle_auth_callback_omitted_state_uses_latest_transaction():
+    """handle_auth_callback succeeds when provider omits state and session is fresh (new tab)."""
+    clear_all_transactions_for_testing()
+    user_id = uuid4()
+    mock_session = SupabaseSession(
+        access_token="token_fallback_123",
+        user_id=user_id,
+        email="operator@test.com",
+    )
+
+    # Simulate user initiating login: transaction stored, but callback returns in fresh tab
+    state = "state_from_link_button_click"
+    code_verifier = "verifier_for_new_tab_test"
+    store_oauth_transaction(state=state, code_verifier=code_verifier, origin="http://localhost:8501")
+
+    # In new tab: no state param in query, no pending_oauth_state in session
+    st.query_params["code"] = "auth_code_omitted_state"
+    st.query_params.pop("state", None)
+    st.query_params.pop("oauth_state", None)
+    st.session_state.pop("pending_oauth_state", None)
+
+    with patch("src.scd2_copilot.auth.SupabaseAuthService") as mock_svc_cls, patch.object(st, "rerun"):
+        mock_instance = mock_svc_cls.return_value
+        mock_instance.exchange_code_for_session.return_value = mock_session
+
+        res = handle_auth_callback()
+        assert res == mock_session
+        assert is_user_logged_in() is True
+        assert "code" not in st.query_params
+        assert get_pending_transactions_count() == 0
+
+    # Replay attempt fails
+    st.query_params["code"] = "auth_code_omitted_state"
+    set_current_supabase_session(None)
+    with patch("src.scd2_copilot.auth.SupabaseAuthService") as mock_svc_cls:
+        res2 = handle_auth_callback()
+        assert res2 is None
+        assert not is_user_logged_in()
+
+    set_current_supabase_session(None)
+
+
+def test_handle_auth_callback_replay_rejected():
+    """Replaying an already-consumed state fails closed."""
+    clear_all_transactions_for_testing()
+    state = "replayed_state_nonce"
+    store_oauth_transaction(state=state, code_verifier="verifier_abc", origin="http://localhost:8501")
+
+    # First consumption succeeds
+    first = consume_oauth_transaction(state)
+    assert first == "verifier_abc"
+
+    # Second consumption must fail
+    assert consume_oauth_transaction(state) is None
+
+
+def test_simultaneous_login_initialization_no_collision():
+    """User A and User B start OAuth simultaneously; each gets their own isolated verifier without collision."""
+    clear_all_transactions_for_testing()
+    with patch("src.scd2_copilot.auth.SupabaseAuthService") as mock_svc_cls:
+        mock_instance = mock_svc_cls.return_value
+        mock_instance.is_configured = True
+
+        # User A initializes login
+        build_google_login_url(redirect_to="http://localhost:8501")
+        call_A = mock_instance.build_google_oauth_url.call_args.kwargs
+        state_A = call_A["state"]
+        challenge_A = call_A["code_challenge"]
+
+        # User B initializes login
+        build_google_login_url(redirect_to="http://localhost:8501")
+        call_B = mock_instance.build_google_oauth_url.call_args.kwargs
+        state_B = call_B["state"]
+        challenge_B = call_B["code_challenge"]
+
+        # States and challenges must be distinct
+        assert state_A != state_B
+        assert challenge_A != challenge_B
+        assert get_pending_transactions_count() == 2
+
+        # User A completes callback -> receives User A's verifier
+        verifier_A = consume_oauth_transaction(state_A)
+        assert verifier_A is not None
+
+        # User B completes callback -> receives User B's verifier
+        verifier_B = consume_oauth_transaction(state_B)
+        assert verifier_B is not None
+        assert verifier_A != verifier_B
+
+        # Both transactions are consumed
+        assert get_pending_transactions_count() == 0
+
+
+def test_session_dataclass_repr_redacts_tokens():
+    """SupabaseSession __repr__ and __str__ never expose access_token or refresh_token."""
+    secret_token = "ey.very_sensitive_secret_jwt_access_token"
+    secret_refresh = "sensitive_refresh_token_value_xyz"
+    session = SupabaseSession(
+        access_token=secret_token,
+        user_id=uuid4(),
+        email="test@company.com",
+        refresh_token=secret_refresh,
+    )
+    rep = repr(session)
+    assert secret_token not in rep
+    assert secret_refresh not in rep
+
+
+def test_manual_token_session_override_removed():
+    """Arbitrary api_access_token in session_state is ignored; token strictly requires active SupabaseSession."""
+    st.session_state["api_access_token"] = "forged_manual_token"
+    set_current_supabase_session(None)
+    assert get_supabase_access_token() is None
+
+
+def test_handle_auth_callback_error():
+    """handle_auth_callback records OAuth error in session state."""
+    st.query_params["error"] = "access_denied"
+    st.query_params["error_description"] = "User cancelled OAuth consent"
+
+    try:
+        res = handle_auth_callback()
+        assert res is None
+        assert "error" not in st.query_params
+        assert "access_denied" in st.session_state.get("auth_error", "")
+    finally:
+        st.session_state.pop("auth_error", None)
+
+
+def test_trigger_logout():
+    """trigger_logout revokes session on server and purges session state."""
+    user_id = uuid4()
+    mock_session = SupabaseSession(
+        access_token="token_to_revoke",
+        user_id=user_id,
+        email="logout@test.com",
+    )
+    set_current_supabase_session(mock_session)
+
+    with patch("src.scd2_copilot.auth.SupabaseAuthService") as mock_svc_cls, patch.object(st, "rerun"):
+        mock_instance = mock_svc_cls.return_value
+        mock_instance.sign_out.return_value = True
+
+        trigger_logout()
+
+        assert is_user_logged_in() is False
+        assert get_current_supabase_session() is None
+        mock_instance.sign_out.assert_called_once_with("token_to_revoke")
 
 
 def test_get_current_request_origin_from_url_and_headers():
@@ -207,36 +446,6 @@ def test_get_current_request_origin_from_url_and_headers():
     )()
     with patch.object(st, "context", mock_ctx_local):
         assert get_current_request_origin() == "http://localhost:8501"
-
-
-def test_sync_redirect_uri_with_host_cloud_origin():
-    """sync_redirect_uri_with_host dynamically adapts localhost redirect_uri when on cloud."""
-    mock_ctx = type("MockCtx", (), {"url": "https://sdc2-copilot.streamlit.app/"})()
-    mock_secrets = {
-        "auth": {
-            "redirect_uri": "http://localhost:8501/oauth2callback",
-            "client_id": "cid",
-            "client_secret": "csec",
-        }
-    }
-    with patch.object(st, "context", mock_ctx), patch.object(st, "secrets", mock_secrets):
-        res = sync_redirect_uri_with_host()
-        assert res == "https://sdc2-copilot.streamlit.app/oauth2callback"
-
-
-def test_sync_redirect_uri_with_host_leaves_localhost_intact():
-    """sync_redirect_uri_with_host leaves localhost redirect_uri intact when running locally."""
-    mock_ctx = type("MockCtx", (), {"url": "http://localhost:8501/"})()
-    mock_secrets = {
-        "auth": {
-            "redirect_uri": "http://localhost:8501/oauth2callback",
-            "client_id": "cid",
-            "client_secret": "csec",
-        }
-    }
-    with patch.object(st, "context", mock_ctx), patch.object(st, "secrets", mock_secrets):
-        res = sync_redirect_uri_with_host()
-        assert res == "http://localhost:8501/oauth2callback"
 
 
 # ── 3. Run Metadata Backward Compatibility & Persistence Tests 

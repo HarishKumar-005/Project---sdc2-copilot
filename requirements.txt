@@ -20,5 +20,14 @@ pydantic-settings>=2.0.0
 python-dotenv>=1.0.0
 tenacity>=9.0.0
 
+# ── Database & Storage (V2) ───────────────────────────
+psycopg[binary]>=3.2.0
+
 # ── Testing ───────────────────────────────────────────
 pytest>=8.0.0
+
+# ── Operational API & Authentication (V2.6) ───────────
+fastapi>=0.115.0
+uvicorn>=0.30.0
+httpx>=0.27.0
+pyjwt[crypto]>=2.8.0

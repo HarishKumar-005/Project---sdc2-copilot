@@ -1,52 +1,84 @@
-# SCD2 Copilot — Verified V1 Current State
+# SCD2 Copilot — Current System State (V3)
 
 ## Purpose
-This document freezes the verified V1 baseline before the real-time upgrade.
+This document captures the verified V3 system state after completing all five V3 phases.
 
-## Verified product today
-SCD2 Copilot is a batch/snapshot-oriented, domain-agnostic SCD Type 2 data-change engine with a Streamlit UI.
+## Product Identity
 
-## Current input
-- Current/source CSV or Polars DataFrame
-- Existing target SCD2 history CSV/DataFrame
+**SCD2 Copilot — Data Change Guardrail**
 
-## Core behavior
-- NEW
-- CHANGED
-- UNCHANGED
-- DELETED
+> A configurable PostgreSQL data-change guardrail that incrementally processes operational table changes, reconstructs historical state using a deterministic SCD2 engine, detects suspicious change patterns using deterministic rules, holds suspicious batches before historical propagation, preserves evidence, and uses GenAI to explain the evidence to an operator.
+
+## Current Input
+
+- **Primary (V3):** Configured PostgreSQL operational tables monitored via `MonitorConfig` with incremental watermark-based polling
+- **Legacy (V1):** Batch CSV or Polars DataFrame upload (fully preserved)
+
+## Core Behavior
+
+- NEW / CHANGED / UNCHANGED / DELETED classification
 - FULL and INCREMENTAL snapshot modes
 - SOFT_DELETE and IGNORE delete policies
-- Half-open temporal intervals: [effective_from, effective_to)
+- Half-open temporal intervals: `[effective_from, effective_to)`
 - Deterministic SCD2 transformation and validation
+- Configurable PostgreSQL source (arbitrary table, keys, tracked columns)
+- Deterministic composite cursor `(timestamp, business_key)` for incremental polling
+- PostgreSQL advisory lock concurrency guard
 
-## Implemented engineering
-- Polars vectorized change detection/transformation
-- Data contracts and quarantine
-- SHA-256 execution fingerprint/idempotency
-- Prefect 3 orchestration
-- Gemini → Groq → deterministic explanation fallback
-- Structured Pydantic AI output
-- Google OIDC authentication
-- Parquet/CSV/JSON run artifacts
+## Guardrail & Containment
+
+- 7 deterministic guardrail rules (HIGH_CHANGE_VOLUME, HIGH_POPULATION_IMPACT, LARGE_QUANTITY_SWING, MASS_DEACTIVATION, HIGH_CHANGE_VELOCITY, WIDE_GEOGRAPHIC_IMPACT, SCD2_VALIDATION_FAILURE)
+- Domain-agnostic evidence extraction (generic numeric, categorical, key dispersion)
+- NORMAL → COMMIT → checkpoint advance
+- SUSPICIOUS → HOLD → evidence preserved → checkpoint preserved
+- Operator recovery: RELEASE / REPROCESS / DISCARD (authenticated, idempotent)
+
+## AI Explanation
+
+- Gemini → Groq → Deterministic Template fallback chain
+- Evidence-grounded: AI explains validated evidence, never decides SCD2 state
+- Grounding validator detects hallucinated rules, contradicted status, modified decisions
+- 100% offline functionality via DeterministicExplanationProvider
+
+## API & UI
+
+- FastAPI headless operational boundary with Supabase Auth JWT verification
+- Streamlit dual-mode interface:
+  - ⚡ Live Guardrail Monitor (V2): Containment Queue, Processing Runs, SCD2 History Explorer, Source Inventory, Source Configuration
+  - 📁 Batch CSV Analysis (V1): Preserved offline batch execution
+- Monitor-aware history: dynamic monitor selector with structured key inputs
+- Generic entity history API: `GET /history/{source_name}/entity?key=<json>`
+
+## Operational Persistence
+
+- `inventory_source` — Canonical inventory demo source
+- `inventory_history` — Canonical inventory SCD2 target
+- `monitored_entity_history` — Generic SCD2 target (any configured monitor)
+- `processing_checkpoint` — Watermark state with cursor_keys JSONB
+- `processing_run` — Run audit log
+- `held_change_batch` — Containment queue with frozen evidence
+
+## Engineering
+
+- Polars vectorized change detection and SCD2 transformation
+- Pydantic typed configuration and data contracts
+- Prefect 3 orchestration (available, bypassed by direct worker)
+- SHA-256 execution fingerprint / batch deduplication
+- Google OIDC + Supabase Auth authentication
 - Docker packaging
-- Extensive automated tests
+- Extensive automated test suite (737 routine tests passing)
 
-## Domain coupling
-The core engine is domain-agnostic. Customer data is used primarily for examples, fixtures, and regression tests. Do not remove customer tests.
+## Domain Coupling
 
-## Not yet implemented
-- Continuous real-time ingestion
-- PostgreSQL operational target
-- Event/checkpoint based streaming semantics
-- Concurrency/transactional live-state handling
-- Live push UI
-- Business-state significance engine
-- Suspicious-change hold/containment
-- Headless FastAPI boundary
+The core engine is domain-agnostic. Warehouse inventory is a **demo domain** exercised through the canonical `inventory` monitor configuration. The same engine processes arbitrary PostgreSQL tables via `MonitorConfig`.
 
-## Important baseline rules
+## Verified Limitations
+
+See [limitations.md](./limitations.md) for the complete verified limitations list.
+
+## Baseline Rules
+
+- The engine decides. Validation protects. AI explains.
 - Do not rewrite the deterministic SCD2 core unless a verified requirement forces it.
 - Do not make AI authoritative for SCD2 correctness.
-- Do not claim production-grade capabilities that are not verified.
-- Do not reuse stale benchmark numbers without checking the benchmark definition.
+- Do not claim capabilities that are not verified.

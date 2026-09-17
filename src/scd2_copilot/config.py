@@ -10,6 +10,7 @@ from enum import Enum
 import json
 from pathlib import Path
 from typing import Any, Optional
+from urllib.parse import urlparse, urlunparse
 
 from pydantic import field_validator, model_validator
 from pydantic_settings import (
@@ -85,9 +86,9 @@ class Settings(BaseSettings):
             dotenv_settings.decode_complex_value = _decode_complex_env_value
         return (init_settings, env_settings, dotenv_settings, file_secret_settings)
 
-    @field_validator("gemini_fallback_models", mode="before")
+    @field_validator("gemini_fallback_models", "cors_allowed_origins", "recovery_operator_emails", mode="before")
     @classmethod
-    def _validate_gemini_fallback_models_input(cls, v: object) -> list[str]:
+    def _validate_string_list_input(cls, v: object) -> list[str]:
         if v is None:
             return []
         if isinstance(v, str):
@@ -105,6 +106,7 @@ class Settings(BaseSettings):
         if isinstance(v, (list, tuple)):
             return [str(m).strip() for m in v if str(m).strip()]
         return []
+
 
     @model_validator(mode="after")
     def _normalize_and_deduplicate_models(self) -> Settings:
@@ -161,6 +163,147 @@ class Settings(BaseSettings):
 
     # ── Prefect local server settings ──────────────────
     prefect_api_url: str = "http://127.0.0.1:4200/api"
+
+    # ── Database & Supabase settings (V2) ───────────────
+    database_url: Optional[str] = ""
+    db_pool_min: int = 1
+    db_pool_max: int = 10
+    db_connect_timeout: float = 10.0
+    supabase_url: Optional[str] = ""
+    supabase_publishable_key: Optional[str] = ""
+    supabase_secret_key: Optional[str] = ""
+
+    # ── Incremental Ingestion Worker settings (V2.2) ───
+    ingestion_enabled: bool = True
+    ingestion_batch_size: int = 50
+    ingestion_poll_interval_seconds: float = 15.0
+    ingestion_source_name: str = "inventory"
+    ingestion_table_name: str = "inventory_source"
+    ingestion_retry_count: int = 3
+    ingestion_retry_backoff_seconds: float = 2.0
+
+    # ── Guardrail & Change Significance settings (V2.3) ───
+    guardrail_enabled: bool = True
+    guardrail_max_changed_records: int = 25
+    guardrail_max_affected_population_ratio: float = 0.80
+    guardrail_min_evaluated_records_for_ratio: int = 10
+    guardrail_max_quantity_relative_change: float = 3.0
+    guardrail_min_absolute_quantity_change: int = 50
+    guardrail_max_deactivation_count: int = 5
+    guardrail_max_changes_per_second: float = 50.0
+    guardrail_min_velocity_records: int = 10
+    guardrail_max_warehouses_affected: int = 5
+
+    # ── AI Explanation settings (V2.5) ─────────────────
+    ai_explanation_enabled: bool = True
+    ai_explanation_for_normal_batches: bool = False
+    ai_explanation_timeout_seconds: float = 10.0
+    ai_explanation_retry_count: int = 1
+
+    # ── Operational API & Supabase Auth settings (V2.6) ──
+    api_host: str = "0.0.0.0"
+    api_port: int = 8000
+    api_base_url: str = "http://localhost:8000"
+    api_auth_required: bool = False
+    cors_allowed_origins: list[str] = [
+        "http://localhost:8501",
+        "http://127.0.0.1:8501",
+        "https://sdc2-copilot.streamlit.app",
+    ]
+    api_request_timeout_seconds: float = 10.0
+    api_max_query_limit: int = 100
+    supabase_auth_issuer: Optional[str] = ""
+    supabase_auth_audience: str = "authenticated"
+    supabase_jwks_url: Optional[str] = ""
+    recovery_operator_emails: list[str] = []
+
+    @field_validator("cors_allowed_origins")
+    @classmethod
+    def _validate_cors_origins(cls, v: list[str]) -> list[str]:
+        if "*" in v:
+            raise ValueError(
+                "Wildcard origin '*' is forbidden in cors_allowed_origins when credentials are enabled. "
+                "Specify explicit origin URLs (e.g. 'http://localhost:8501')."
+            )
+        return v
+
+    @field_validator("guardrail_max_affected_population_ratio")
+    @classmethod
+    def _validate_ratio(cls, v: float) -> float:
+        if not (0.0 <= v <= 1.0):
+            raise ValueError("guardrail_max_affected_population_ratio must be between 0.0 and 1.0")
+        return v
+
+    @field_validator(
+        "guardrail_max_changed_records",
+        "guardrail_min_evaluated_records_for_ratio",
+        "guardrail_min_absolute_quantity_change",
+        "guardrail_max_deactivation_count",
+        "guardrail_min_velocity_records",
+        "guardrail_max_warehouses_affected",
+    )
+    @classmethod
+    def _validate_non_negative_int(cls, v: int) -> int:
+        if v < 0:
+            raise ValueError("Guardrail integer threshold cannot be negative")
+        return v
+
+    @field_validator(
+        "guardrail_max_quantity_relative_change",
+        "guardrail_max_changes_per_second",
+    )
+    @classmethod
+    def _validate_non_negative_float(cls, v: float) -> float:
+        if v < 0.0:
+            raise ValueError("Guardrail float threshold cannot be negative")
+        return v
+
+    @property
+    def has_database(self) -> bool:
+        """True if DATABASE_URL is configured."""
+        return bool(self.database_url and self.database_url.strip())
+
+    @property
+    def resolved_supabase_jwks_url(self) -> str:
+        """Return the JWKS URL, deriving it from supabase_url if not explicitly set."""
+        if self.supabase_jwks_url and self.supabase_jwks_url.strip():
+            return self.supabase_jwks_url.strip()
+        if self.supabase_url and self.supabase_url.strip():
+            return f"{self.supabase_url.rstrip('/')}/auth/v1/.well-known/jwks.json"
+        return ""
+
+    @property
+    def resolved_supabase_issuer(self) -> str:
+        """Return expected JWT issuer, deriving it from supabase_url if not explicitly set."""
+        if self.supabase_auth_issuer and self.supabase_auth_issuer.strip():
+            return self.supabase_auth_issuer.strip()
+        if self.supabase_url and self.supabase_url.strip():
+            return f"{self.supabase_url.rstrip('/')}/auth/v1"
+        return ""
+
+
+    def get_redacted_database_url(self) -> str:
+        """Return database URL with credentials safely masked."""
+        if not self.has_database:
+            return ""
+        try:
+            parsed = urlparse(self.database_url)
+            if not parsed.netloc:
+                return "<configured>"
+            netloc = parsed.netloc
+            if "@" in netloc:
+                userinfo, hostinfo = netloc.split("@", 1)
+                if ":" in userinfo:
+                    user, _ = userinfo.split(":", 1)
+                    masked_userinfo = f"{user}:***"
+                else:
+                    masked_userinfo = "***"
+                redacted_netloc = f"{masked_userinfo}@{hostinfo}"
+            else:
+                redacted_netloc = netloc
+            return urlunparse(parsed._replace(netloc=redacted_netloc))
+        except Exception:
+            return "<redacted-db-url>"
 
     def get_runs_dir(self) -> Path:
         """Resolve the runs directory as an absolute Path relative to project root if not absolute."""

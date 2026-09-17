@@ -86,13 +86,11 @@ def inject_theme() -> None:
 def render_login_gate() -> None:
     """Render a clean, professional sign-in page when user is unauthenticated."""
     from src.scd2_copilot.auth import (
+        build_google_login_url,
         is_auth_configured,
-        sync_redirect_uri_with_host,
-        trigger_google_login,
+        set_current_supabase_session,
     )
-
-    # Proactively align redirect_uri with current host origin if deployed
-    sync_redirect_uri_with_host()
+    from src.scd2_copilot.auth_supabase import SupabaseAuthService
 
     col_l, col_center, col_r = st.columns([1.2, 2.0, 1.2])
     with col_center:
@@ -114,20 +112,53 @@ def render_login_gate() -> None:
             st.markdown("### Sign in")
             st.markdown(
                 "<div style='font-size: 0.9rem; color: var(--text-secondary, #8b949e); margin-top: -6px; margin-bottom: 20px;'>"
-                "Sign in with your account to access your workspace."
+                "Sign in with your Supabase Auth account to access your workspace."
                 "</div>",
                 unsafe_allow_html=True,
             )
 
-            if st.button("Continue with Google", type="primary", width="stretch", icon=":material/login:"):
-                trigger_google_login()
+            if st.session_state.get("auth_error"):
+                st.error(f"Sign in failed: {st.session_state['auth_error']}")
+                if st.button("✕ Dismiss Error", key="btn_dismiss_auth_error"):
+                    st.session_state.pop("auth_error", None)
+                    st.rerun()
+
+            oauth_url = build_google_login_url()
+            if oauth_url:
+                st.link_button(
+                    "Continue with Google",
+                    url=oauth_url,
+                    type="primary",
+                    width="stretch",
+                    icon=":material/login:",
+                )
+            else:
+                if st.button("Continue with Google", type="primary", width="stretch", icon=":material/login:"):
+                    st.error("Supabase Auth is not configured. Please verify SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY.")
 
             if not is_auth_configured():
                 st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
                 st.info(
-                    "Authentication credentials not configured in `.streamlit/secrets.toml`. "
-                    "Provide `client_id`, `client_secret`, and `cookie_secret` to enable login."
+                    "Supabase Auth credentials not configured in `.env`. "
+                    "Ensure `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` are set to enable user sign-in."
                 )
+
+            st.markdown("<div style='margin-top: 16px;'></div>", unsafe_allow_html=True)
+            with st.expander("🔑 Operator Credentials (Email / Password)", expanded=False):
+                st.caption("Sign in using operator credentials configured in Supabase Auth.")
+                auth_email = st.text_input("Operator Email", key="login_email")
+                auth_pwd = st.text_input("Password", type="password", key="login_password")
+                if st.button("Sign In with Password", width="stretch", key="btn_password_signin"):
+                    if auth_email and auth_pwd:
+                        auth_svc = SupabaseAuthService()
+                        session = auth_svc.sign_in_with_password(auth_email, auth_pwd)
+                        if session:
+                            set_current_supabase_session(session)
+                            st.session_state.pop("auth_error", None)
+                            st.rerun()
+                        else:
+                            err_msg = auth_svc.last_error or "Invalid email or password."
+                            st.error(f"Sign in failed: {err_msg}")
 
 
 def render_user_badge(user: Optional[AuthenticatedUser]) -> None:
@@ -1279,3 +1310,249 @@ def compute_ai_status(
         "tokens": tokens_str,
         "cost": cost_str,
     }
+
+
+# ── 15. V2 Live Monitoring UI Components ──────────────────
+
+
+def render_v2_system_health_strip(
+    health_status: str,
+    db_connected: bool,
+    metrics: Any,
+    last_refresh_time: Optional[datetime] = None,
+) -> None:
+    """Render top operational KPI cards and connectivity statuses."""
+    col1, col2, col3, col4, col5 = st.columns(5)
+
+    with col1:
+        api_color = "var(--success, #238636)" if health_status == "healthy" else "var(--error, #da3633)"
+        api_text = "Online" if health_status == "healthy" else "Offline"
+        st.markdown(
+            f"""
+            <div class="metric-card">
+                <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-2, #8b949e); font-weight: 600;">API Service</div>
+                <div style="font-size: 1.4rem; font-weight: 700; color: {api_color}; margin-top: 4px;">● {api_text}</div>
+                <div style="font-size: 0.75rem; color: var(--text-2, #8b949e); margin-top: 2px;">FastAPI v1</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with col2:
+        db_color = "var(--success, #238636)" if db_connected else "var(--error, #da3633)"
+        db_text = "Connected" if db_connected else "Disconnected"
+        st.markdown(
+            f"""
+            <div class="metric-card">
+                <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-2, #8b949e); font-weight: 600;">Database</div>
+                <div style="font-size: 1.4rem; font-weight: 700; color: {db_color}; margin-top: 4px;">● {db_text}</div>
+                <div style="font-size: 0.75rem; color: var(--text-2, #8b949e); margin-top: 2px;">Supabase Postgres</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with col3:
+        if metrics is not None:
+            active_holds = getattr(metrics, "active_holds_count", 0)
+            hold_color = "var(--error, #da3633)" if active_holds > 0 else "var(--success, #238636)"
+            hold_val = f"{active_holds:,}"
+            hold_sub = "Suspicious quarantined"
+        else:
+            hold_color = "var(--text-2, #8b949e)"
+            hold_val = "—"
+            hold_sub = "Telemetry unavailable"
+        st.markdown(
+            f"""
+            <div class="metric-card">
+                <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-2, #8b949e); font-weight: 600;">Active Holds</div>
+                <div style="font-size: 1.4rem; font-weight: 700; color: {hold_color}; margin-top: 4px;">{hold_val}</div>
+                <div style="font-size: 0.75rem; color: var(--text-2, #8b949e); margin-top: 2px;">{hold_sub}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with col4:
+        if metrics is not None:
+            total_runs = getattr(metrics, "total_runs", 0)
+            committed_runs = getattr(metrics, "successful_runs", 0)
+            runs_val = f'{committed_runs:,} <span style="font-size: 0.9rem; color: var(--text-2, #8b949e);">/ {total_runs:,}</span>'
+            runs_sub = "Micro-batches"
+        else:
+            runs_val = "—"
+            runs_sub = "Telemetry unavailable"
+        st.markdown(
+            f"""
+            <div class="metric-card">
+                <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-2, #8b949e); font-weight: 600;">Committed Runs</div>
+                <div style="font-size: 1.4rem; font-weight: 700; color: var(--text-1, #ffffff); margin-top: 4px;">{runs_val}</div>
+                <div style="font-size: 0.75rem; color: var(--text-2, #8b949e); margin-top: 2px;">{runs_sub}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with col5:
+        if metrics is not None:
+            watermark = getattr(metrics, "latest_checkpoint", None)
+            if watermark:
+                wm_str = watermark.strftime("%H:%M:%S") if hasattr(watermark, "strftime") else str(watermark)[:19]
+            else:
+                wm_str = "T0 (Initial)"
+            wm_sub = "Checkpoint"
+        else:
+            wm_str = "—"
+            wm_sub = "Telemetry unavailable"
+        st.markdown(
+            f"""
+            <div class="metric-card">
+                <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-2, #8b949e); font-weight: 600;">Stream Watermark</div>
+                <div style="font-size: 1.4rem; font-weight: 700; color: var(--accent, #58a6ff); margin-top: 4px;">{wm_str}</div>
+                <div style="font-size: 0.75rem; color: var(--text-2, #8b949e); margin-top: 2px;">{wm_sub}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+
+def render_v2_hold_card(
+    hold: Any,
+    on_release_callback: Any,
+    on_reprocess_callback: Any,
+    on_discard_callback: Any,
+) -> None:
+    """Render full detail for a selected hold including evidence, AI explanation, and recovery console."""
+    sev_color = {
+        "CRITICAL": "#da3633",
+        "HIGH": "#e3b341",
+        "MEDIUM": "#58a6ff",
+        "LOW": "#8b949e",
+    }.get(str(hold.severity).upper(), "#8b949e")
+
+    status_badge_color = {
+        "HELD": "#da3633",
+        "RELEASED": "#238636",
+        "DISCARDED": "#8b949e",
+        "REPROCESSED": "#1f6feb",
+    }.get(str(hold.status).upper(), "#8b949e")
+
+    import textwrap
+    card_html = textwrap.dedent(
+        f"""
+        <div style="border: 1px solid var(--border, #30363d); border-radius: 8px; padding: 16px; margin-bottom: 20px; background: var(--card-bg, #161b22);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div>
+                    <span style="background: {sev_color}22; color: {sev_color}; border: 1px solid {sev_color}66; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 0.82rem; margin-right: 8px;">
+                        {hold.severity.upper()} SEVERITY
+                    </span>
+                    <span style="background: {status_badge_color}22; color: {status_badge_color}; border: 1px solid {status_badge_color}66; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 0.82rem;">
+                        {hold.status.upper()}
+                    </span>
+                </div>
+                <div style="font-size: 0.82rem; color: var(--text-2, #8b949e);">
+                    Hold ID: <code>{hold.hold_id}</code> | Run: <code>{str(hold.run_id)[:8]}...</code>
+                </div>
+            </div>
+            <div style="font-size: 1.05rem; font-weight: 600; color: var(--text-1, #ffffff); margin-bottom: 8px;">
+                {html_mod.escape(hold.reason)}
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-2, #8b949e);">
+                <strong>Source:</strong> {html_mod.escape(hold.source_name)} |
+                <strong>Affected records:</strong> {hold.records_affected:,} |
+                <strong>Created at:</strong> {str(hold.created_at)[:19]}
+                {f" | <strong>Resolved at:</strong> {str(hold.resolved_at)[:19]}" if hold.resolved_at else ""}
+            </div>
+        </div>
+        """
+    )
+    st.markdown(card_html, unsafe_allow_html=True)
+
+    # Tabs inside the selected hold
+    hold_tabs = st.tabs(["AI Explanation", "Deterministic Evidence", "Recovery Console"])
+
+    with hold_tabs[0]:
+        explanation = hold.explanation
+        if explanation and isinstance(explanation, dict):
+            provider_label = f"{explanation.get('provider', 'AI').capitalize()} ({explanation.get('model', 'model')})"
+            grounded_badge = (
+                '<span style="color: var(--success, #238636); font-weight: 600;">✓ Grounding Verified</span>'
+                if explanation.get("grounding_passed", True)
+                else '<span style="color: var(--warning, #e3b341); font-weight: 600;">⚠ Grounding Fallback</span>'
+            )
+            st.markdown(
+                f"""
+                <div style="margin-bottom: 12px; font-size: 0.82rem; color: var(--text-2, #8b949e);">
+                    <strong>Provider:</strong> {provider_label} &nbsp;|&nbsp; {grounded_badge}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+            col_ex1, col_ex2 = st.columns(2)
+            with col_ex1:
+                st.markdown("**What Changed:**")
+                st.write(explanation.get("what_changed", "No summary provided."))
+                st.markdown("**Validation Summary:**")
+                st.write(explanation.get("validation_summary", "Deterministic validation passed."))
+            with col_ex2:
+                st.markdown("**Why Flagged by Guardrail:**")
+                st.write(explanation.get("why_flagged", "Triggered guardrail threshold."))
+                st.markdown("**Containment Summary:**")
+                st.write(explanation.get("containment_summary", "Batch quarantined downstream."))
+
+            ev_points = explanation.get("evidence_points") or []
+            if ev_points:
+                st.markdown("**Key Evidence Points:**")
+                for pt in ev_points:
+                    st.markdown(f"- {pt}")
+        else:
+            st.info("No AI explanation attached to this held batch.")
+
+    with hold_tabs[1]:
+        evidence = hold.evidence or {}
+        st.markdown("**Triggered Guardrail Rules:**")
+        rules = evidence.get("triggered_rules") or []
+        if rules:
+            for r in rules:
+                st.markdown(f"- **`{r.get('rule_name', 'Rule')}`** ({r.get('severity', '')}): {r.get('description', '')}")
+        else:
+            st.write("No rule list available in evidence.")
+
+        st.markdown("**Guardrail Metrics Vector:**")
+        g_ev = evidence.get("guardrail_evidence") or {}
+        if g_ev:
+            st.json(g_ev)
+        else:
+            st.json(evidence)
+
+    with hold_tabs[2]:
+        if hold.status == "HELD":
+            st.markdown("#### Operational Recovery Console")
+            st.caption(
+                "Recovery actions require authenticated authorization. "
+                "Actions execute transactionally via `ContainmentService` and update the downstream history and stream watermark."
+            )
+            op_reason = st.text_input(
+                "Operator Reason (Audit Log)",
+                placeholder="e.g. Verified legitimate batch promotion with warehouse manager",
+                key=f"reason_{hold.hold_id}",
+            )
+
+            col_a1, col_a2, col_a3 = st.columns(3)
+            with col_a1:
+                if st.button("✅ Release Hold", key=f"btn_rel_{hold.hold_id}", width="stretch", type="primary"):
+                    on_release_callback(hold.hold_id, op_reason)
+            with col_a2:
+                force_cb = st.checkbox("Force Commit if Still Suspicious", key=f"force_{hold.hold_id}")
+                if st.button("🔄 Reprocess Batch", key=f"btn_rep_{hold.hold_id}", width="stretch"):
+                    on_reprocess_callback(hold.hold_id, force_cb)
+            with col_a3:
+                advance_cb = st.checkbox("Advance Checkpoint", value=True, key=f"adv_{hold.hold_id}")
+                if st.button("🗑️ Discard Batch", key=f"btn_disc_{hold.hold_id}", width="stretch"):
+                    on_discard_callback(hold.hold_id, op_reason, advance_cb)
+        else:
+            st.success(
+                f"This hold has already been resolved with status **{hold.status}** at {hold.resolved_at or 'earlier'}. "
+                "Any repeat calls will be safely handled as idempotent operations."
+            )
+

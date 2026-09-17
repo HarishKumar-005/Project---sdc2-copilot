@@ -1,27 +1,27 @@
-"""Native Streamlit Google OpenID Connect (OIDC) authentication service.
+"""Supabase Auth service for Streamlit user authentication and session management.
 
 Provides:
 - Immutable AuthenticatedUser identity model for audit and ownership tracking
-- Safe extraction of authenticated claims from st.user
-- Graceful configuration verification without exposing secrets
-- Streamlit native login / logout triggers (st.login, st.logout)
+- Session persistence and auto-refresh in st.session_state
+- PKCE Google OAuth authorization URL generation and callback code exchange
+- Supabase session logout and token revocation
+- Dynamic retrieval of Supabase access JWT for ApiClient requests
 """
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 import logging
+import secrets
+import threading
+import time
 from typing import Any, Optional
 from urllib.parse import urlparse
-import warnings
-
-try:
-    from authlib.deprecate import AuthlibDeprecationWarning
-    warnings.filterwarnings("ignore", category=AuthlibDeprecationWarning)
-except ImportError:
-    pass
+from uuid import UUID
 
 import streamlit as st
+
+from .auth_supabase import SupabaseAuthService, SupabaseSession, generate_pkce_pair
 
 logger = logging.getLogger("scd2_copilot.auth")
 
@@ -31,10 +31,10 @@ class AuthenticatedUser:
     """Immutable identity of an authenticated user.
 
     Stores strictly minimal identity claims needed for audit and ownership.
-    Deliberately excludes tokens, passwords, cookies, and raw Google profile payloads.
+    Constructed exclusively from verified Supabase session attributes.
     """
 
-    provider: str = "google"
+    provider: str = "supabase"
     subject: str = ""
     email: Optional[str] = None
     name: Optional[str] = None
@@ -54,68 +54,83 @@ class AuthenticatedUser:
         if not data or not isinstance(data, dict):
             return None
         return cls(
-            provider=data.get("provider", "google"),
+            provider=data.get("provider", "supabase"),
             subject=str(data.get("subject", "")),
             email=data.get("email"),
             name=data.get("name"),
         )
 
 
-def is_user_logged_in() -> bool:
-    """Check whether the current user is authenticated via st.user.
+def get_current_supabase_session() -> Optional[SupabaseSession]:
 
-    Safely handles both Streamlit script context and non-interactive/test environments.
-    """
+    """Retrieve active Supabase session from Streamlit session state, auto-refreshing if needed."""
     try:
-        # Check attribute first
-        if hasattr(st, "user"):
-            val = getattr(st.user, "is_logged_in", None)
-            if val is not None:
-                return bool(val)
-            # Fall back to dict access
-            return bool(st.user.get("is_logged_in", False))
-        return False
+        if not hasattr(st, "session_state"):
+            return None
+        session: Optional[SupabaseSession] = st.session_state.get("supabase_session")
+        if session is None:
+            return None
+
+        # Check for auto-refresh
+        if session.needs_refresh and session.refresh_token:
+            auth_svc = SupabaseAuthService()
+            refreshed = auth_svc.refresh_session(session.refresh_token)
+            if refreshed:
+                st.session_state["supabase_session"] = refreshed
+                return refreshed
+            elif session.is_expired:
+                # Refresh failed and token is expired
+                st.session_state.pop("supabase_session", None)
+                return None
+
+        return session
+    except Exception as exc:
+        logger.debug("Could not resolve Supabase session: %s", exc)
+        return None
+
+
+def set_current_supabase_session(session: Optional[SupabaseSession]) -> None:
+    """Store active Supabase session in Streamlit session state."""
+    try:
+        if hasattr(st, "session_state"):
+            if session is not None:
+                st.session_state["supabase_session"] = session
+            else:
+                st.session_state.pop("supabase_session", None)
     except Exception:
-        return False
+        pass
+
+
+def get_supabase_access_token() -> Optional[str]:
+    """Return active Supabase access token (JWT) for Bearer authentication."""
+    session = get_current_supabase_session()
+    if session and not session.is_expired:
+        return session.access_token
+    return None
+
+
+def is_user_logged_in() -> bool:
+    """Check whether the current user is authenticated via active Supabase session."""
+    session = get_current_supabase_session()
+    return session is not None and not session.is_expired
 
 
 def get_current_user() -> Optional[AuthenticatedUser]:
-    """Extract authenticated user identity from st.user.
+    """Extract authenticated user identity from the active Supabase session.
 
     Returns:
         AuthenticatedUser if logged in, None otherwise.
     """
-    if not is_user_logged_in():
-        return None
-
-    try:
-        user_proxy = getattr(st, "user", None)
-        if user_proxy is None:
-            return None
-
-        # Extract stable subject identifier (sub is standard OIDC claim)
-        sub = (
-            getattr(user_proxy, "sub", None)
-            or user_proxy.get("sub")
-            or getattr(user_proxy, "id", None)
-            or user_proxy.get("id")
-            or getattr(user_proxy, "email", None)
-            or user_proxy.get("email")
-            or "unknown_user"
-        )
-
-        email = getattr(user_proxy, "email", None) or user_proxy.get("email")
-        name = getattr(user_proxy, "name", None) or user_proxy.get("name")
-
+    session = get_current_supabase_session()
+    if session is not None and not session.is_expired:
         return AuthenticatedUser(
-            provider="google",
-            subject=str(sub),
-            email=str(email) if email else None,
-            name=str(name) if name else None,
+            provider="supabase",
+            subject=str(session.user_id),
+            email=session.email,
+            name=session.display_name,
         )
-    except Exception as exc:
-        logger.warning("Could not extract authenticated user claims: %s", exc)
-        return None
+    return None
+
 
 
 def get_current_request_origin() -> Optional[str]:
@@ -142,104 +157,260 @@ def get_current_request_origin() -> Optional[str]:
     return None
 
 
-def sync_redirect_uri_with_host() -> Optional[str]:
-    """Ensure redirect_uri in secrets matches the current deployment origin if running in cloud.
+@dataclass(frozen=True)
+class _OAuthTransaction:
+    """Ephemeral server-side transaction record for binding PKCE verifier to OAuth state."""
 
-    When deployed to Streamlit Community Cloud (e.g. sdc2-copilot.streamlit.app),
-    secrets might still contain 'http://localhost:8501/oauth2callback' copied from
-    local dev. This function dynamically adapts redirect_uri in memory so the OIDC
-    flow redirects back to the actual deployed application domain instead of localhost.
+    code_verifier: str
+    created_at: float
+    origin: str
 
-    Returns:
-        The active redirect_uri (either existing or dynamically adjusted), or None.
+
+_TRANSACTION_LOCK = threading.Lock()
+_TRANSACTION_STORE: dict[str, _OAuthTransaction] = {}
+_MAX_STORE_CAPACITY = 500
+_TRANSACTION_TTL_SECONDS = 600.0  # 10 minutes maximum lifetime
+
+
+def store_oauth_transaction(state: str, code_verifier: str, origin: str) -> None:
+    """Store an ephemeral OAuth PKCE transaction keyed by high-entropy state nonce.
+
+    Applies capacity bounding and automatic TTL eviction of stale transactions.
     """
-    try:
-        if not hasattr(st, "secrets") or "auth" not in st.secrets:
+    now = time.time()
+    with _TRANSACTION_LOCK:
+        # Purge expired entries
+        expired_keys = [
+            s for s, tx in _TRANSACTION_STORE.items()
+            if (now - tx.created_at) > _TRANSACTION_TTL_SECONDS
+        ]
+        for s in expired_keys:
+            _TRANSACTION_STORE.pop(s, None)
+
+        # Enforce maximum store capacity
+        if len(_TRANSACTION_STORE) >= _MAX_STORE_CAPACITY:
+            oldest_key = min(_TRANSACTION_STORE.keys(), key=lambda k: _TRANSACTION_STORE[k].created_at)
+            _TRANSACTION_STORE.pop(oldest_key, None)
+
+        _TRANSACTION_STORE[state] = _OAuthTransaction(
+            code_verifier=code_verifier,
+            created_at=now,
+            origin=origin,
+        )
+
+
+def consume_oauth_transaction(state: Optional[str]) -> Optional[str]:
+    """Atomically retrieve and remove the code_verifier for a valid, unexpired OAuth transaction.
+
+    Fails closed: returns None if state is absent, unknown, expired, or already consumed.
+    """
+    if not state or not isinstance(state, str):
+        return None
+
+    now = time.time()
+    with _TRANSACTION_LOCK:
+        tx = _TRANSACTION_STORE.pop(state, None)
+        if tx is None:
+            return None
+        if (now - tx.created_at) > _TRANSACTION_TTL_SECONDS:
+            return None
+        return tx.code_verifier
+
+
+def consume_latest_oauth_transaction(
+    origin: Optional[str] = None,
+    max_age_seconds: float = _TRANSACTION_TTL_SECONDS,
+) -> Optional[str]:
+    """Atomically retrieve and remove the code_verifier for the most recent valid, unexpired OAuth transaction.
+
+    Used as a graceful fallback when external OAuth providers (such as Supabase Auth)
+    omit the state parameter on callback and the browser session was reset across redirects
+    or opened in a new tab by st.link_button.
+    """
+    now = time.time()
+    with _TRANSACTION_LOCK:
+        # Purge expired entries
+        expired_keys = [
+            s for s, tx in _TRANSACTION_STORE.items()
+            if (now - tx.created_at) > _TRANSACTION_TTL_SECONDS
+        ]
+        for s in expired_keys:
+            _TRANSACTION_STORE.pop(s, None)
+
+        if not _TRANSACTION_STORE:
             return None
 
-        auth_sec = st.secrets["auth"]
-        current_redirect = auth_sec.get("redirect_uri", "")
+        candidates = list(_TRANSACTION_STORE.keys())
+        if origin:
+            clean_origin = origin.rstrip("/")
+            origin_candidates = [
+                k for k in candidates
+                if _TRANSACTION_STORE[k].origin.rstrip("/") == clean_origin
+            ]
+            if origin_candidates:
+                candidates = origin_candidates
 
-        origin = get_current_request_origin()
-        if not origin:
-            return current_redirect or None
+        latest_state = max(candidates, key=lambda k: _TRANSACTION_STORE[k].created_at)
+        tx = _TRANSACTION_STORE.pop(latest_state)
+        if (now - tx.created_at) > max_age_seconds:
+            return None
+        return tx.code_verifier
 
-        expected_redirect = f"{origin.rstrip('/')}/oauth2callback"
-        if current_redirect == expected_redirect:
-            return current_redirect
 
-        is_local_config = "localhost" in current_redirect or "127.0.0.1" in current_redirect
-        is_remote_origin = "localhost" not in origin and "127.0.0.1" not in origin
+def get_pending_transactions_count() -> int:
+    """Return count of active pending transactions (used for diagnostics and tests)."""
+    with _TRANSACTION_LOCK:
+        return len(_TRANSACTION_STORE)
 
-        # Only auto-sync if currently configured as localhost but accessed via remote cloud origin
-        if is_local_config and is_remote_origin:
-            from streamlit.runtime.secrets import AttrDict, secrets_singleton
 
-            def _to_plain_dict(obj: Any) -> Any:
-                if isinstance(obj, (dict, AttrDict)):
-                    return {k: _to_plain_dict(v) for k, v in obj.items()}
-                elif isinstance(obj, list):
-                    return [_to_plain_dict(v) for v in obj]
-                return obj
-
-            auth_dict = _to_plain_dict(secrets_singleton.get("auth", {}))
-            auth_dict["redirect_uri"] = expected_redirect
-            secrets_singleton.merge_programmatic_secrets({"auth": auth_dict})
-            logger.info("Automatically synced auth redirect_uri to: %s", expected_redirect)
-            return expected_redirect
-
-        return current_redirect or None
-    except Exception as exc:
-        logger.debug("Could not auto-sync redirect_uri with host: %s", exc)
-        return None
+def clear_all_transactions_for_testing() -> None:
+    """Clear transaction store strictly for test isolation."""
+    with _TRANSACTION_LOCK:
+        _TRANSACTION_STORE.clear()
 
 
 def is_auth_configured() -> bool:
-    """Determine whether Streamlit OIDC authentication credentials are configured.
+    """Determine whether Supabase Auth is configured with a valid base URL and publishable key."""
+    auth_svc = SupabaseAuthService()
+    return auth_svc.is_configured
 
-    Checks for the presence of the [auth] section in st.secrets.
+
+def build_google_login_url(redirect_to: Optional[str] = None) -> str:
+    """Generate PKCE pair, register server-side transaction nonce, and return clean OAuth URL.
+
+    The PKCE code_verifier remains strictly server-side and is NEVER attached to redirect URLs.
     """
+    auth_svc = SupabaseAuthService()
+    if not auth_svc.is_configured:
+        return ""
+
+    origin = redirect_to or get_current_request_origin() or "http://localhost:8501"
+    base_origin = origin.rstrip("/")
+
+    # Generate high-entropy PKCE pair and unguessable state nonce
+    code_verifier, code_challenge = generate_pkce_pair()
+    oauth_state = secrets.token_urlsafe(32)
+
+    # Store transaction server-side keyed strictly by state nonce
+    store_oauth_transaction(state=oauth_state, code_verifier=code_verifier, origin=base_origin)
+
+    # Also record in session_state for same-session binding check
     try:
-        sync_redirect_uri_with_host()
-        if not hasattr(st, "secrets"):
-            return False
-        if "auth" not in st.secrets:
-            return False
-        auth_sec = st.secrets["auth"]
-        # Valid if client_id is directly in [auth] or nested under [auth.google]
-        has_direct = bool(auth_sec.get("client_id") and auth_sec.get("client_secret"))
-        has_named = "google" in auth_sec and bool(
-            auth_sec["google"].get("client_id") and auth_sec["google"].get("client_secret")
-        )
-        return has_direct or has_named
+        if hasattr(st, "session_state"):
+            st.session_state["pending_oauth_state"] = oauth_state
     except Exception:
-        return False
+        pass
+
+    # Notice: target_redirect is clean base origin (NO spkce parameter!).
+    # State is passed via standard OAuth 2.0 state parameter.
+    return auth_svc.build_google_oauth_url(
+        redirect_to=base_origin,
+        code_challenge=code_challenge,
+        state=oauth_state,
+    )
 
 
-def trigger_google_login() -> None:
-    """Initiate native Streamlit OIDC authentication flow.
+def handle_auth_callback() -> Optional[SupabaseSession]:
+    """Inspect query parameters for Supabase OAuth callback (code, state, or error).
 
-    Directs the user to Google OAuth2 consent screen.
+    Validates state binding, atomically consumes code_verifier, exchanges authorization code
+    for session, updates session state, clears query params, and returns the session.
     """
     try:
-        sync_redirect_uri_with_host()
-        if hasattr(st, "secrets") and "auth" in st.secrets and "google" in st.secrets["auth"]:
-            st.login("google")
-        else:
-            st.login()
+        if not hasattr(st, "query_params"):
+            return None
+
+        # Check for OAuth error callback
+        if "error" in st.query_params:
+            err_code = str(st.query_params.get("error", "auth_error"))
+            err_desc = str(st.query_params.get("error_description", "Authentication failed"))
+            logger.warning("Supabase OAuth error callback: %s", err_code)
+            if hasattr(st, "session_state"):
+                st.session_state["auth_error"] = f"{err_code}: {err_desc}"
+            st.query_params.clear()
+            return None
+
+        # Check for authorization code callback
+        if "code" in st.query_params:
+            auth_code = str(st.query_params["code"])
+            state = st.query_params.get("state") or st.query_params.get("oauth_state")
+
+            # Atomically consume matching code_verifier from server-side transaction store
+            code_verifier: Optional[str] = None
+            if state:
+                code_verifier = consume_oauth_transaction(str(state))
+
+            # Fall back to session_state pending_oauth_state if query param state was omitted
+            if not code_verifier and hasattr(st, "session_state") and "pending_oauth_state" in st.session_state:
+                saved_state = st.session_state.pop("pending_oauth_state", None)
+                if saved_state:
+                    code_verifier = consume_oauth_transaction(str(saved_state))
+
+            # If state was omitted by the identity provider and session was reset (e.g. new tab from st.link_button),
+            # fall back to the most recent unexpired server-side transaction matching the request origin.
+            if not code_verifier and not state:
+                req_origin = get_current_request_origin()
+                code_verifier = consume_latest_oauth_transaction(origin=req_origin)
+
+            # Clear temporary state and query parameters immediately
+            st.query_params.clear()
+            if hasattr(st, "session_state"):
+                st.session_state.pop("pending_oauth_state", None)
+
+            # Fail closed if transaction state could not be validated
+            if not code_verifier:
+                logger.warning("OAuth callback rejected: missing, invalid, expired, or replayed state")
+                if hasattr(st, "session_state"):
+                    st.session_state["auth_error"] = (
+                        "Invalid or expired authentication transaction. Please try signing in again."
+                    )
+                return None
+
+            auth_svc = SupabaseAuthService()
+            session = auth_svc.exchange_code_for_session(auth_code=auth_code, code_verifier=code_verifier)
+
+            if session:
+                logger.info("Successfully established Supabase session for user %s", session.user_id)
+                set_current_supabase_session(session)
+                if hasattr(st, "session_state"):
+                    st.session_state.pop("auth_error", None)
+                st.rerun()
+                return session
+            else:
+                reason = auth_svc.last_error or "Failed to complete authentication. Please try signing in again."
+                logger.warning("Failed to exchange Supabase authorization code: %s", reason)
+                if hasattr(st, "session_state"):
+                    st.session_state["auth_error"] = reason
+                return None
+
     except Exception as exc:
-        # Avoid leaking client secrets or stack traces
-        logger.error("Authentication initiation failed: %s", type(exc).__name__)
-        st.error(
-            "Authentication service is currently unavailable. "
-            "Please ensure Google OIDC credentials are configured in your Streamlit secrets."
-        )
+        logger.error("Error processing auth callback: %s", exc)
+        if hasattr(st, "session_state"):
+            st.session_state["auth_error"] = f"Error processing login callback: {exc}"
+    return None
 
 
 def trigger_logout() -> None:
-    """Log out the current user by clearing the identity cookie."""
+    """Log out the current user by revoking the Supabase session and clearing state."""
     try:
-        st.logout()
+        session = get_current_supabase_session()
+        if session and session.access_token:
+            auth_svc = SupabaseAuthService()
+            auth_svc.sign_out(session.access_token)
     except Exception as exc:
-        logger.error("Logout failed: %s", type(exc).__name__)
-        st.error("Could not complete logout. Please refresh your browser.")
+        logger.debug("Supabase sign_out call error: %s", exc)
+
+    try:
+        set_current_supabase_session(None)
+        if hasattr(st, "session_state"):
+            st.session_state.pop("supabase_session", None)
+            st.session_state.pop("pending_oauth_state", None)
+            st.session_state.pop("auth_error", None)
+    except Exception:
+        pass
+
+    try:
+        st.rerun()
+    except Exception:
+        pass
+

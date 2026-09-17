@@ -180,7 +180,7 @@ def test_ai_status_provider_fallback():
         explanations=[Explanation({"id": 101}, ChangeType.NEW, "Created", "groq")],
         metrics=LLMMetrics(
             provider="groq",
-            model="llama-3.3-70b-versatile",
+            model="openai/gpt-oss-120b",
             prompt_tokens=180,
             completion_tokens=60,
             total_tokens=240,

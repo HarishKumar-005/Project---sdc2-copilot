@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 class GroqProvider(LLMProvider):
     """Generates explanations using the Groq API."""
 
-    MODEL = "llama-3.3-70b-versatile"
+    MODEL = "openai/gpt-oss-120b"
 
     def __init__(self, api_key: str) -> None:
         self._client = groq_sdk.Groq(api_key=api_key)

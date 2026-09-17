@@ -8,7 +8,7 @@
 [![Prefect](https://img.shields.io/badge/Prefect-3.8-0052FF?logo=prefect&logoColor=white)](https://prefect.io)
 [![Pydantic](https://img.shields.io/badge/Pydantic-2.12-E92063?logo=pydantic&logoColor=white)](https://docs.pydantic.dev)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.55-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io)
-[![Tests](https://img.shields.io/badge/Tests-440%20Passing-brightgreen?logo=pytest&logoColor=white)](https://pytest.org)
+[![Tests](https://img.shields.io/badge/Tests-737%20Passing-brightgreen?logo=pytest&logoColor=white)](https://pytest.org)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
 <p align="center">
@@ -372,7 +372,7 @@ Alternatively, select **"Prefect Deployment (Background Runner)"** in the Stream
 
 ## 🧪 Testing & Verification
 
-The repository enforces 100% deterministic test coverage across **440 unit, integration, and orchestration tests**:
+The repository enforces 100% deterministic test coverage across **737 unit, integration, and orchestration tests**:
 
 ```powershell
 # Run the complete test suite (excluding long-running benchmarks)

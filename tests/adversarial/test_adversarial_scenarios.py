@@ -343,6 +343,7 @@ def test_api_failure_simulation(mock_genai_client, mock_sleep):
     
     settings = Settings(
         gemini_api_key="mock_key",
+        groq_api_key="",
         llm_provider=LLMProvider.GEMINI
     )
     
