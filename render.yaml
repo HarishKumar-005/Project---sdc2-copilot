@@ -1,0 +1,28 @@
+# ==============================================================================
+# SCD2 Copilot — Render Blueprint Specification
+# Deploys the Headless Operational FastAPI Backend on Render
+# ==============================================================================
+
+services:
+  - type: web
+    name: scd2-copilot-api
+    runtime: python
+    plan: free
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    startCommand: uvicorn src.scd2_copilot.api:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.9"
+      - key: APP_ENV
+        value: "production"
+      - key: CORS_ALLOWED_ORIGINS
+        value: "https://sdc2-copilot.streamlit.app,http://localhost:8501"
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_PUBLISHABLE_KEY
+        sync: false
+      - key: SUPABASE_SECRET_KEY
+        sync: false

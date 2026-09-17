@@ -74,7 +74,7 @@ st.set_page_config(
     page_title="SCD2 Copilot",
     page_icon=":material/table_chart:",
     layout="wide",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="expanded",
 )
 
 # ── Initialize session state ──────────────────────────

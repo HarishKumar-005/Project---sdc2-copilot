@@ -29,17 +29,19 @@ COPY --chown=appuser:appgroup . /app
 RUN mkdir -p /app/data/runs/.fingerprints /app/data/quarantine /app/data/staging && \
     chown appuser:appgroup /app && \
     chown -R appuser:appgroup /app/data && \
-    chmod -R 775 /app/data
+    chmod -R 775 /app/data && \
+    chmod +x /app/entrypoint.sh
 
 # Switch to non-root user
 USER appuser
 
-# Expose default Streamlit port
-EXPOSE 8501
+# Expose default Streamlit port and internal API port
+EXPOSE 8501 8000
 
 # Standard Streamlit health check via built-in urllib (no extra packages needed)
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8501/_stcore/health').read()" || exit 1
 
-# Production startup: Streamlit in foreground
-CMD ["streamlit", "run", "app/streamlit_app.py", "--server.address=0.0.0.0", "--server.port=8501"]
+# Production startup: dual service runner (FastAPI + Streamlit)
+CMD ["/app/entrypoint.sh"]
+

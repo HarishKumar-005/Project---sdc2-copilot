@@ -113,10 +113,12 @@ def render_v2_live_monitor(current_user: Optional[AuthenticatedUser], settings: 
         st.warning(
             f"⚠️ **Operational API Service Unreachable**\n\n"
             f"The monitoring dashboard could not connect to the headless API at `{settings.api_base_url}`.\n\n"
-            f"Start the FastAPI service in your terminal to stream live telemetry:\n\n"
+            f"**To run locally with live telemetry:**\n"
             f"```powershell\n"
             f".venv\\Scripts\\uvicorn src.scd2_copilot.api:app --host 127.0.0.1 --port 8000\n"
             f"```\n\n"
+            f"💡 **Using the Deployed Cloud Dashboard?**\n\n"
+            f"Streamlit Community Cloud hosts the UI. To use the in-process SCD2 engine with demo data, Polars transformation, and AI explanations, switch to **📁 Batch CSV Analysis (V1)** in the left sidebar.\n\n"
             f"*Detail: {error_detail or 'Connection refused'}*"
         )
         return
