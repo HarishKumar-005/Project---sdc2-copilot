@@ -616,3 +616,14 @@ def test_get_current_request_origin_from_headers():
                 origin = get_current_request_origin()
                 assert origin == "https://my-proxy-app.streamlit.app"
 
+
+def test_get_current_request_origin_from_render_env(monkeypatch):
+    """Verify RENDER_EXTERNAL_URL is automatically detected on Render."""
+    monkeypatch.setenv("RENDER_EXTERNAL_URL", "https://project-sdc2-copilot.onrender.com/")
+    with patch("src.scd2_copilot.auth.get_settings") as mock_settings:
+        mock_settings.return_value = Settings(streamlit_app_url="")
+        with patch.object(st, "secrets", {}):
+            origin = get_current_request_origin()
+            assert origin == "https://project-sdc2-copilot.onrender.com"
+
+

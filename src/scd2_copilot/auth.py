@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import logging
+import os
 import secrets
 import threading
 import time
@@ -137,12 +138,25 @@ def get_current_user() -> Optional[AuthenticatedUser]:
 def get_current_request_origin() -> Optional[str]:
     """Extract the current web origin (scheme + host) from Streamlit context or configuration."""
     try:
-        # 1. Explicit configuration in Settings (from .env or env var)
+        # 1. Explicit configuration in Settings (from .env or env var STREAMLIT_APP_URL)
         settings = get_settings()
         if getattr(settings, "streamlit_app_url", None) and settings.streamlit_app_url.strip():
             return settings.streamlit_app_url.strip().rstrip("/")
 
-        # 2. Explicit configuration in st.secrets
+        # 2. Render cloud automatic environment variable (RENDER_EXTERNAL_URL)
+        render_url = os.environ.get("RENDER_EXTERNAL_URL")
+        if render_url and render_url.strip():
+            return render_url.strip().rstrip("/")
+
+        # 3. Railway automatic environment variable (RAILWAY_PUBLIC_DOMAIN)
+        railway_domain = os.environ.get("RAILWAY_PUBLIC_DOMAIN")
+        if railway_domain and railway_domain.strip():
+            domain = railway_domain.strip().rstrip("/")
+            if not domain.startswith("http"):
+                domain = f"https://{domain}"
+            return domain
+
+        # 4. Explicit configuration in st.secrets
         if hasattr(st, "secrets") and st.secrets:
             app_url = st.secrets.get("STREAMLIT_APP_URL") or st.secrets.get("APP_URL")
             if app_url and str(app_url).strip():

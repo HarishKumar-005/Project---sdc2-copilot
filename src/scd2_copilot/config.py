@@ -245,6 +245,7 @@ class Settings(BaseSettings):
         "http://localhost:8501",
         "http://127.0.0.1:8501",
         "https://sdc2-copilot.streamlit.app",
+        "https://project-sdc2-copilot.onrender.com",
     ]
     streamlit_app_url: Optional[str] = ""
     api_request_timeout_seconds: float = 10.0
@@ -262,6 +263,12 @@ class Settings(BaseSettings):
                 "Wildcard origin '*' is forbidden in cors_allowed_origins when credentials are enabled. "
                 "Specify explicit origin URLs (e.g. 'http://localhost:8501')."
             )
+        import os
+        render_ext = os.environ.get("RENDER_EXTERNAL_URL")
+        if render_ext and render_ext.strip():
+            clean_render = render_ext.strip().rstrip("/")
+            if clean_render not in v:
+                v = list(v) + [clean_render]
         return v
 
     @field_validator("guardrail_max_affected_population_ratio")
