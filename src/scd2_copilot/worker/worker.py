@@ -38,6 +38,7 @@ from ..source import (
     MonitorConfig,
     PostgresSourceAdapter,
     get_default_inventory_monitor_config,
+    get_default_product_master_monitor_config,
     get_monitor_registry,
 )
 from ..transform_scd2 import apply_scd2
@@ -126,11 +127,18 @@ class IngestionWorker:
         self.checkpoint_repo = CheckpointRepository(db=self.db)
         self.run_repo = ProcessingRunRepository(db=self.db)
 
-        # Initialize MonitorConfig (defaults to canonical warehouse inventory demo)
+        # Initialize MonitorConfig (defaults to active product master demo)
         if monitor_config is not None:
             self.monitor_config = monitor_config
         else:
-            self.monitor_config = get_default_inventory_monitor_config(settings=self.settings)
+            if (
+                source_name in ("inventory", "warehouse_inventory")
+                or table_name == "inventory_source"
+                or (source_name is None and table_name is None and self.settings.ingestion_source_name in ("inventory", "warehouse_inventory"))
+            ):
+                self.monitor_config = get_default_inventory_monitor_config(settings=self.settings)
+            else:
+                self.monitor_config = get_default_product_master_monitor_config(settings=self.settings)
 
         if source_name or table_name:
             source_update = {}

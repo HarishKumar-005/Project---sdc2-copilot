@@ -1,0 +1,221 @@
+{
+  "source_id": "s1",
+  "fingerprint_hash": "4d2e45d54b339818b7a05f449d792dd60bb62b4cf856745331a2860dd0265db0",
+  "total_rows": 2,
+  "total_columns": 7,
+  "columns": [
+    {
+      "column_name": "id",
+      "normalized_name": "id",
+      "inferred_type": "string",
+      "polars_type": "String",
+      "total_count": 2,
+      "null_count": 0,
+      "null_rate": 0.0,
+      "distinct_count": 2,
+      "uniqueness_rate": 1.0,
+      "is_unique": true,
+      "min_length": 3,
+      "max_length": 3,
+      "samples": [
+        "C-1",
+        "C-2"
+      ],
+      "top_values": [
+        {
+          "value": "C-1",
+          "count": 1,
+          "percentage": 50.0
+        },
+        {
+          "value": "C-2",
+          "count": 1,
+          "percentage": 50.0
+        }
+      ],
+      "date_patterns": []
+    },
+    {
+      "column_name": "fname",
+      "normalized_name": "fname",
+      "inferred_type": "string",
+      "polars_type": "String",
+      "total_count": 2,
+      "null_count": 0,
+      "null_rate": 0.0,
+      "distinct_count": 2,
+      "uniqueness_rate": 1.0,
+      "is_unique": true,
+      "min_length": 1,
+      "max_length": 1,
+      "samples": [
+        "A",
+        "B"
+      ],
+      "top_values": [
+        {
+          "value": "A",
+          "count": 1,
+          "percentage": 50.0
+        },
+        {
+          "value": "B",
+          "count": 1,
+          "percentage": 50.0
+        }
+      ],
+      "date_patterns": []
+    },
+    {
+      "column_name": "lname",
+      "normalized_name": "lname",
+      "inferred_type": "string",
+      "polars_type": "String",
+      "total_count": 2,
+      "null_count": 0,
+      "null_rate": 0.0,
+      "distinct_count": 2,
+      "uniqueness_rate": 1.0,
+      "is_unique": true,
+      "min_length": 1,
+      "max_length": 1,
+      "samples": [
+        "X",
+        "Y"
+      ],
+      "top_values": [
+        {
+          "value": "X",
+          "count": 1,
+          "percentage": 50.0
+        },
+        {
+          "value": "Y",
+          "count": 1,
+          "percentage": 50.0
+        }
+      ],
+      "date_patterns": []
+    },
+    {
+      "column_name": "email_addr",
+      "normalized_name": "email_addr",
+      "inferred_type": "string",
+      "polars_type": "String",
+      "total_count": 2,
+      "null_count": 0,
+      "null_rate": 0.0,
+      "distinct_count": 2,
+      "uniqueness_rate": 1.0,
+      "is_unique": true,
+      "min_length": 7,
+      "max_length": 7,
+      "samples": [
+        "*@x.com",
+        "*@y.com"
+      ],
+      "top_values": [
+        {
+          "value": "*@x.com",
+          "count": 1,
+          "percentage": 50.0
+        },
+        {
+          "value": "*@y.com",
+          "count": 1,
+          "percentage": 50.0
+        }
+      ],
+      "date_patterns": []
+    },
+    {
+      "column_name": "dob",
+      "normalized_name": "dob",
+      "inferred_type": "string",
+      "polars_type": "String",
+      "total_count": 2,
+      "null_count": 0,
+      "null_rate": 0.0,
+      "distinct_count": 1,
+      "uniqueness_rate": 0.5,
+      "is_unique": false,
+      "min_length": 10,
+      "max_length": 10,
+      "samples": [
+        "1990-01-01"
+      ],
+      "top_values": [
+        {
+          "value": "1990-01-01",
+          "count": 2,
+          "percentage": 100.0
+        }
+      ],
+      "date_patterns": [
+        {
+          "pattern": "%Y-%m-%d",
+          "sample_count": 2,
+          "is_ambiguous": false
+        }
+      ]
+    },
+    {
+      "column_name": "cust_status",
+      "normalized_name": "cust_status",
+      "inferred_type": "string",
+      "polars_type": "String",
+      "total_count": 2,
+      "null_count": 0,
+      "null_rate": 0.0,
+      "distinct_count": 1,
+      "uniqueness_rate": 0.5,
+      "is_unique": false,
+      "min_length": 6,
+      "max_length": 6,
+      "samples": [
+        "ACTIVE"
+      ],
+      "top_values": [
+        {
+          "value": "ACTIVE",
+          "count": 2,
+          "percentage": 100.0
+        }
+      ],
+      "date_patterns": []
+    },
+    {
+      "column_name": "signup_date",
+      "normalized_name": "signup_date",
+      "inferred_type": "string",
+      "polars_type": "String",
+      "total_count": 2,
+      "null_count": 0,
+      "null_rate": 0.0,
+      "distinct_count": 1,
+      "uniqueness_rate": 0.5,
+      "is_unique": false,
+      "min_length": 10,
+      "max_length": 10,
+      "samples": [
+        "2026-01-01"
+      ],
+      "top_values": [
+        {
+          "value": "2026-01-01",
+          "count": 2,
+          "percentage": 100.0
+        }
+      ],
+      "date_patterns": [
+        {
+          "pattern": "%Y-%m-%d",
+          "sample_count": 2,
+          "is_ambiguous": false
+        }
+      ]
+    }
+  ],
+  "profiled_at": "2026-09-19T11:05:33.837302Z",
+  "sampling_policy": "masked"
+}

@@ -40,7 +40,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         "--table-name",
         type=str,
         default=None,
-        help="Operational source table name (default: inventory_source)",
+        help="Operational source table name (default: from configuration)",
     )
     parser.add_argument(
         "--batch-size",

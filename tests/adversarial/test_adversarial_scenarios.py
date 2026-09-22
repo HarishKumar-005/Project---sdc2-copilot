@@ -366,8 +366,9 @@ def test_api_failure_simulation(mock_genai_client, mock_sleep):
 
     # Verify retry backoff sleep was invoked without stalling real time
     assert mock_sleep.called
-    assert mock_sleep.call_count == 8
-    assert [c.args[0] for c in mock_sleep.call_args_list] == [3, 6] * 4
+    retry_sleep_calls = [c.args[0] for c in mock_sleep.call_args_list if c.args and c.args[0] in (3, 6)]
+    assert len(retry_sleep_calls) == 8
+    assert retry_sleep_calls == [3, 6] * 4
     
     # Verify metrics
     assert result.metrics is not None

@@ -12,6 +12,7 @@ from .exceptions import (
     SourceTypeMismatchError,
 )
 from .inventory import get_default_inventory_monitor_config
+from .product_master import get_default_product_master_monitor_config
 from .models import (
     ChangeTimestampDefinition,
     MonitorConfig,
@@ -42,5 +43,6 @@ __all__ = [
     "SourceTypeMismatchError",
     "SourceValidationResult",
     "get_default_inventory_monitor_config",
+    "get_default_product_master_monitor_config",
     "get_monitor_registry",
 ]

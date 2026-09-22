@@ -112,17 +112,34 @@ def get_supabase_access_token() -> Optional[str]:
 
 
 def is_user_logged_in() -> bool:
-    """Check whether the current user is authenticated via active Supabase session."""
+    """Check whether the current user is authenticated via active Supabase session or dev bypass."""
+    try:
+        if hasattr(st, "session_state") and st.session_state.get("dev_bypass_authenticated") is True:
+            return True
+        if os.environ.get("AUTH_DISABLED", "").lower() in ("true", "1", "yes"):
+            return True
+    except Exception:
+        pass
     session = get_current_supabase_session()
     return session is not None and not session.is_expired
 
 
 def get_current_user() -> Optional[AuthenticatedUser]:
-    """Extract authenticated user identity from the active Supabase session.
+    """Extract authenticated user identity from the active Supabase session or dev bypass.
 
     Returns:
         AuthenticatedUser if logged in, None otherwise.
     """
+    try:
+        if (hasattr(st, "session_state") and st.session_state.get("dev_bypass_authenticated") is True) or (os.environ.get("AUTH_DISABLED", "").lower() in ("true", "1", "yes")):
+            return AuthenticatedUser(
+                provider="local_dev",
+                subject="local-operator",
+                email="harishkumar.sp5511@gmail.com",
+                name="Local Operator (Dev Mode)",
+            )
+    except Exception:
+        pass
     session = get_current_supabase_session()
     if session is not None and not session.is_expired:
         return AuthenticatedUser(
@@ -431,6 +448,7 @@ def trigger_logout() -> None:
             st.session_state.pop("supabase_session", None)
             st.session_state.pop("pending_oauth_state", None)
             st.session_state.pop("auth_error", None)
+            st.session_state.pop("dev_bypass_authenticated", None)
     except Exception:
         pass
 

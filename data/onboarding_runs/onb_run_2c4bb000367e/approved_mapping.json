@@ -1,0 +1,151 @@
+{
+  "mapping_version_id": "map_ver_crm_salesforce_v1",
+  "source_id": "crm_salesforce",
+  "source_fingerprint": "632d10757394d60ec2b442e62455749486cf7d15bfd53e83af728dcd11b88679",
+  "source_schema_version": 1,
+  "canonical_schema_name": "customer",
+  "canonical_schema_version": 1,
+  "version_number": 1,
+  "mappings": [
+    {
+      "source_field": "Cust_ID",
+      "target_field": "customer_id",
+      "mapping_type": "TRANSFORMED",
+      "transformations": [
+        {
+          "op": "TRIM",
+          "params": {}
+        }
+      ],
+      "decision": "APPROVE",
+      "reviewer": "data_lead@enterprise.org",
+      "review_notes": "Approved in operator review",
+      "confidence": 1.0,
+      "provenance_reason": "Approved proposal: Source field 'Cust_ID' is unique (1.0 uniqueness rate) and matches canonical 'customer_id' identifier type and semantics."
+    },
+    {
+      "source_field": "First Name",
+      "target_field": "first_name",
+      "mapping_type": "TRANSFORMED",
+      "transformations": [
+        {
+          "op": "TRIM",
+          "params": {}
+        }
+      ],
+      "decision": "APPROVE",
+      "reviewer": "data_lead@enterprise.org",
+      "review_notes": "Approved in operator review",
+      "confidence": 0.98,
+      "provenance_reason": "Approved proposal: Source field name 'First Name' directly aligns with canonical 'first_name' string attribute."
+    },
+    {
+      "source_field": "Last Name",
+      "target_field": "last_name",
+      "mapping_type": "TRANSFORMED",
+      "transformations": [
+        {
+          "op": "TRIM",
+          "params": {}
+        }
+      ],
+      "decision": "APPROVE",
+      "reviewer": "data_lead@enterprise.org",
+      "review_notes": "Approved in operator review",
+      "confidence": 0.98,
+      "provenance_reason": "Approved proposal: Source field name 'Last Name' matches canonical 'last_name' string attribute."
+    },
+    {
+      "source_field": "Contact Email",
+      "target_field": "email",
+      "mapping_type": "TRANSFORMED",
+      "transformations": [
+        {
+          "op": "TRIM",
+          "params": {}
+        },
+        {
+          "op": "NORMALIZE_EMAIL",
+          "params": {}
+        }
+      ],
+      "decision": "APPROVE",
+      "reviewer": "data_lead@enterprise.org",
+      "review_notes": "Approved in operator review",
+      "confidence": 1.0,
+      "provenance_reason": "Approved proposal: Source field samples match valid email format, aligning with canonical 'email' requiring normalization."
+    },
+    {
+      "source_field": "Phone Number",
+      "target_field": null,
+      "mapping_type": "UNMAPPED",
+      "transformations": [],
+      "decision": "REJECT",
+      "reviewer": "data_lead@enterprise.org",
+      "review_notes": "Unmapped column (duplicate or non-canonical target rejected)",
+      "confidence": 1.0,
+      "provenance_reason": "Rejected by data_lead@enterprise.org (Unmapped column (duplicate or non-canonical target rejected))"
+    },
+    {
+      "source_field": "Birth_Date",
+      "target_field": "date_of_birth",
+      "mapping_type": "TRANSFORMED",
+      "transformations": [
+        {
+          "op": "PARSE_DATE",
+          "params": {}
+        }
+      ],
+      "decision": "APPROVE",
+      "reviewer": "data_lead@enterprise.org",
+      "review_notes": "Approved in operator review",
+      "confidence": 1.0,
+      "provenance_reason": "Approved proposal: Field 'Birth_Date' represents date of birth formatted with ISO date pattern %Y-%m-%d, mapping to canonical 'date_of_birth' date field."
+    },
+    {
+      "source_field": "Cust_Status",
+      "target_field": "status",
+      "mapping_type": "TRANSFORMED",
+      "transformations": [
+        {
+          "op": "TRIM",
+          "params": {}
+        },
+        {
+          "op": "UPPERCASE",
+          "params": {}
+        },
+        {
+          "op": "MAP_ENUM",
+          "params": {}
+        }
+      ],
+      "decision": "APPROVE",
+      "reviewer": "data_lead@enterprise.org",
+      "review_notes": "Approved in operator review",
+      "confidence": 0.95,
+      "provenance_reason": "Approved proposal: Source field values include ACTIVE, INACTIVE, PENDING, and SUSPENDED, requiring enum mapping to canonical 'status' allowed values ACTIVE and INACTIVE."
+    },
+    {
+      "source_field": "Created_Timestamp",
+      "target_field": "created_at",
+      "mapping_type": "TRANSFORMED",
+      "transformations": [
+        {
+          "op": "PARSE_DATE",
+          "params": {}
+        }
+      ],
+      "decision": "APPROVE",
+      "reviewer": "data_lead@enterprise.org",
+      "review_notes": "Approved in operator review",
+      "confidence": 1.0,
+      "provenance_reason": "Approved proposal: Source field provides ISO-8601 UTC timestamp values (%Y-%m-%dT%H:%M:%SZ) aligning with canonical datetime field 'created_at'."
+    }
+  ],
+  "is_complete": true,
+  "unmapped_required_fields": [],
+  "approved_by": "data_lead@enterprise.org",
+  "approved_at": "2026-09-20T11:27:20.559126Z",
+  "supersedes_version_id": null
+}

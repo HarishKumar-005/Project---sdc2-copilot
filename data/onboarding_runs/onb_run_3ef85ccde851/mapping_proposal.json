@@ -1,0 +1,196 @@
+{
+  "source_id": "dataset_b_moderately_messy",
+  "source_fingerprint": "1b1647a571d1bb1e7ad1c02a557c32806ca3a6046a2239761a9988c9a9e56da6",
+  "canonical_schema_name": "customer",
+  "canonical_schema_version": 1,
+  "proposals": [
+    {
+      "source_field": "cust_no",
+      "target_field": "customer_id",
+      "mapping_type": "DIRECT",
+      "confidence": 1.0,
+      "reason": "Deterministically matched to canonical 'customer_id' based on: exact_alias_match, type_compatible, unique_identifier_confirmed.",
+      "transformations": [],
+      "deterministic_evidence": {
+        "name_similarity_score": 0.56,
+        "type_compatible": true,
+        "uniqueness_compatible": true,
+        "matched_signals": [
+          "exact_alias_match",
+          "type_compatible",
+          "unique_identifier_confirmed"
+        ]
+      },
+      "is_ambiguous": false,
+      "conflicting_targets": []
+    },
+    {
+      "source_field": "first_name",
+      "target_field": "first_name",
+      "mapping_type": "TRANSFORMED",
+      "confidence": 0.95,
+      "reason": "Deterministically matched to canonical 'first_name' based on: exact_alias_match, type_compatible.",
+      "transformations": [
+        {
+          "op": "TRIM",
+          "params": {}
+        }
+      ],
+      "deterministic_evidence": {
+        "name_similarity_score": 1.0,
+        "type_compatible": true,
+        "uniqueness_compatible": true,
+        "matched_signals": [
+          "exact_alias_match",
+          "type_compatible"
+        ]
+      },
+      "is_ambiguous": false,
+      "conflicting_targets": []
+    },
+    {
+      "source_field": "last_name",
+      "target_field": "last_name",
+      "mapping_type": "TRANSFORMED",
+      "confidence": 0.95,
+      "reason": "Deterministically matched to canonical 'last_name' based on: exact_alias_match, type_compatible.",
+      "transformations": [
+        {
+          "op": "TRIM",
+          "params": {}
+        }
+      ],
+      "deterministic_evidence": {
+        "name_similarity_score": 1.0,
+        "type_compatible": true,
+        "uniqueness_compatible": true,
+        "matched_signals": [
+          "exact_alias_match",
+          "type_compatible"
+        ]
+      },
+      "is_ambiguous": false,
+      "conflicting_targets": []
+    },
+    {
+      "source_field": "email_address",
+      "target_field": "email",
+      "mapping_type": "TRANSFORMED",
+      "confidence": 1.0,
+      "reason": "Deterministically matched to canonical 'email' based on: exact_alias_match, type_compatible, email_pattern_verified.",
+      "transformations": [
+        {
+          "op": "TRIM",
+          "params": {}
+        },
+        {
+          "op": "NORMALIZE_EMAIL",
+          "params": {}
+        }
+      ],
+      "deterministic_evidence": {
+        "name_similarity_score": 0.56,
+        "type_compatible": true,
+        "uniqueness_compatible": true,
+        "matched_signals": [
+          "exact_alias_match",
+          "type_compatible",
+          "email_pattern_verified"
+        ]
+      },
+      "is_ambiguous": false,
+      "conflicting_targets": []
+    },
+    {
+      "source_field": "dob",
+      "target_field": "date_of_birth",
+      "mapping_type": "TRANSFORMED",
+      "confidence": 1.0,
+      "reason": "Deterministically matched to canonical 'date_of_birth' based on: exact_alias_match, type_compatible, date_pattern_%Y-%m-%d.",
+      "transformations": [
+        {
+          "op": "PARSE_DATE",
+          "params": {
+            "format": "%Y-%m-%d"
+          }
+        }
+      ],
+      "deterministic_evidence": {
+        "name_similarity_score": 0.38,
+        "type_compatible": true,
+        "uniqueness_compatible": true,
+        "matched_signals": [
+          "exact_alias_match",
+          "type_compatible",
+          "date_pattern_%Y-%m-%d"
+        ]
+      },
+      "is_ambiguous": false,
+      "conflicting_targets": []
+    },
+    {
+      "source_field": "acct_status",
+      "target_field": "status",
+      "mapping_type": "TRANSFORMED",
+      "confidence": 0.59,
+      "reason": "Deterministically matched to canonical 'status' based on: token_similarity_0.71, type_compatible.",
+      "transformations": [
+        {
+          "op": "TRIM",
+          "params": {}
+        },
+        {
+          "op": "UPPERCASE",
+          "params": {}
+        },
+        {
+          "op": "MAP_ENUM",
+          "params": {}
+        }
+      ],
+      "deterministic_evidence": {
+        "name_similarity_score": 0.71,
+        "type_compatible": true,
+        "uniqueness_compatible": true,
+        "matched_signals": [
+          "token_similarity_0.71",
+          "type_compatible"
+        ]
+      },
+      "is_ambiguous": false,
+      "conflicting_targets": []
+    },
+    {
+      "source_field": "signup_date",
+      "target_field": "created_at",
+      "mapping_type": "TRANSFORMED",
+      "confidence": 1.0,
+      "reason": "Deterministically matched to canonical 'created_at' based on: exact_alias_match, type_compatible, date_pattern_%Y-%m-%dT%H:%M:%SZ.",
+      "transformations": [
+        {
+          "op": "PARSE_DATE",
+          "params": {
+            "format": "%Y-%m-%dT%H:%M:%SZ"
+          }
+        }
+      ],
+      "deterministic_evidence": {
+        "name_similarity_score": 0.29,
+        "type_compatible": true,
+        "uniqueness_compatible": true,
+        "matched_signals": [
+          "exact_alias_match",
+          "type_compatible",
+          "date_pattern_%Y-%m-%dT%H:%M:%SZ"
+        ]
+      },
+      "is_ambiguous": false,
+      "conflicting_targets": []
+    }
+  ],
+  "unmapped_canonical_fields": [],
+  "provider_used": "deterministic_fallback",
+  "is_fallback": true,
+  "fallback_reason": "429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 20, model: gemini-3.8-flash\\nPlease retry in 44.10886649s.', 'status': 'RESOURCE_EXHAUSTED', 'details': [{'@type': 'type.googleapis.com/google.rpc.Help', 'links': [{'description': 'Learn more about Gemini API quotas', 'url': 'https://ai.google.dev/gemini-api/docs/rate-limits'}]}, {'@type': 'type.googleapis.com/google.rpc.QuotaFailure', 'violations': [{'quotaMetric': 'generativelanguage.googleapis.com/generate_content_free_tier_requests', 'quotaId': 'GenerateRequestsPerDayPerProjectPerModel-FreeTier', 'quotaDimensions': {'model': 'gemini-3.8-flash', 'location': 'global'}, 'quotaValue': '20'}]}, {'@type': 'type.googleapis.com/google.rpc.RetryInfo', 'retryDelay': '44s'}]}}",
+  "created_at": "2026-09-19T17:55:14.623728Z"
+}

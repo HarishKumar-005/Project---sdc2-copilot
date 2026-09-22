@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 import logging
+from threading import RLock
 from typing import Any, Optional
 from uuid import UUID
 
@@ -20,6 +21,22 @@ class CheckpointRepository(BaseRepository):
 
     TABLE_NAME = "processing_checkpoint"
 
+    def __init__(
+        self,
+        db: Optional[Any] = None,
+        *,
+        in_memory: bool = False,
+    ) -> None:
+        super().__init__(db=db)
+        self._in_memory = in_memory or (not self.db.is_configured)
+        self._lock = RLock()
+        self._memory_checkpoints: dict[tuple[str, str], ProcessingCheckpointRow] = {}
+
+    @property
+    def in_memory_mode(self) -> bool:
+        """Return True if running in in-memory mode."""
+        return self._in_memory
+
     def get_checkpoint(
         self,
         source_name: str,
@@ -27,6 +44,10 @@ class CheckpointRepository(BaseRepository):
         conn: Optional[psycopg.Connection[Any]] = None,
     ) -> Optional[ProcessingCheckpointRow]:
         """Fetch the active checkpoint for a given stream and table."""
+        if self._in_memory:
+            with self._lock:
+                return self._memory_checkpoints.get((source_name, table_name))
+
         query = f"""
             SELECT source_name, table_name, watermark_value, last_successful_run_id, updated_at, cursor_keys
             FROM {self.TABLE_NAME}
@@ -47,6 +68,16 @@ class CheckpointRepository(BaseRepository):
         conn: Optional[psycopg.Connection[Any]] = None,
     ) -> Optional[ProcessingCheckpointRow]:
         """Fetch the most recently updated checkpoint across all streams (or matching table_name)."""
+        if self._in_memory:
+            with self._lock:
+                matching = [
+                    r for (s, t), r in self._memory_checkpoints.items()
+                    if not table_name or t == table_name
+                ]
+                if not matching:
+                    return None
+                return max(matching, key=lambda r: r.updated_at)
+
         where_clause = "WHERE table_name = %s" if table_name else ""
         params: list[Any] = [table_name] if table_name else []
         query = f"""
@@ -75,6 +106,22 @@ class CheckpointRepository(BaseRepository):
         conn: Optional[psycopg.Connection[Any]] = None,
     ) -> ProcessingCheckpointRow:
         """Ensure a checkpoint exists for the stream, inserting an initial row if absent."""
+        if self._in_memory:
+            with self._lock:
+                key = (source_name, table_name)
+                if key in self._memory_checkpoints:
+                    return self._memory_checkpoints[key]
+                row = ProcessingCheckpointRow(
+                    source_name=source_name,
+                    table_name=table_name,
+                    watermark_value=watermark,
+                    last_successful_run_id=run_id,
+                    updated_at=datetime.now(timezone.utc),
+                    cursor_keys=cursor_keys,
+                )
+                self._memory_checkpoints[key] = row
+                return row
+
         import json
 
         existing = self.get_checkpoint(source_name, table_name=table_name, conn=conn)
@@ -125,6 +172,22 @@ class CheckpointRepository(BaseRepository):
         conn: Optional[psycopg.Connection[Any]] = None,
     ) -> ProcessingCheckpointRow:
         """Atomically update the stream watermark, composite cursor keys, and last successful run ID."""
+        if self._in_memory:
+            with self._lock:
+                key = (source_name, table_name)
+                last_run = run_id
+                if key in self._memory_checkpoints and last_run is None:
+                    last_run = self._memory_checkpoints[key].last_successful_run_id
+                row = ProcessingCheckpointRow(
+                    source_name=source_name,
+                    table_name=table_name,
+                    watermark_value=watermark,
+                    last_successful_run_id=last_run,
+                    updated_at=datetime.now(timezone.utc),
+                    cursor_keys=cursor_keys,
+                )
+                self._memory_checkpoints[key] = row
+                return row
         import json
 
         now = datetime.now(timezone.utc)

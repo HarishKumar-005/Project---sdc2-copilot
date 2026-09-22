@@ -1,0 +1,162 @@
+{
+  "report_id": "m10-eval-12b171fab51c",
+  "canonical_schema_version": 1,
+  "evaluated_at": "2026-09-19T18:14:23.139981Z",
+  "data_quality": {
+    "total_injected_violations": 10,
+    "detected_violations": 11,
+    "coverage_rate": 1.1,
+    "clean_records_evaluated": 50,
+    "false_positive_count": 0,
+    "false_positive_rate": 0.0,
+    "violations_by_category": {
+      "EMAIL_FORMAT": 3,
+      "CUSTOMER_ID_REQUIRED": 2,
+      "STATUS_ENUM": 2,
+      "INVALID_DATE": 2,
+      "CUSTOMER_ID_DUPLICATE": 2
+    }
+  },
+  "mapping": {
+    "total_labeled_fields": 21,
+    "correct_mappings": 21,
+    "accuracy": 1.0,
+    "review_required_count": 2,
+    "review_required_rate": 0.0952,
+    "unmapped_count": 1,
+    "unsupported_rejections": 1
+  },
+  "exception_workflow": {
+    "exceptions_enqueued": 5,
+    "corrections_attempted": 5,
+    "reprocessing_succeeded": 5,
+    "resolution_rate": 1.0,
+    "audit_entries_verified": 10
+  },
+  "idempotency": {
+    "total_submissions": 3,
+    "identical_replays_detected": 1,
+    "conflicts_detected": 1,
+    "side_effect_violations": 0,
+    "idempotency_correctness_rate": 1.0
+  },
+  "schema_drift": {
+    "total_drift_events": 15,
+    "detected_drift_events": 15,
+    "detection_accuracy": 1.0,
+    "compatibility_states_verified": 3,
+    "broken_mappings_prevented": 1
+  },
+  "scd2": {
+    "total_evaluated_transitions": 4,
+    "new_records_correct": 2,
+    "changed_records_correct": 1,
+    "unchanged_records_correct": 1,
+    "temporal_invariant_violations": 0,
+    "point_in_time_queries_correct": 2
+  },
+  "guardrail": {
+    "total_batches_evaluated": 2,
+    "normal_batches_passed": 1,
+    "suspicious_batches_held": 1,
+    "decision_accuracy": 1.0,
+    "pre_commit_holds_verified": 1,
+    "history_leakage_violations": 0,
+    "recovery_transitions_verified": 1
+  },
+  "ai_advisory": {
+    "total_evaluations": 5,
+    "structured_output_validity_rate": 1.0,
+    "prompt_pii_suppression_rate": 1.0,
+    "fallback_success_rate": 1.0,
+    "authority_boundary_violations": 0
+  },
+  "security": {
+    "secrets_contained": true,
+    "pii_suppressed_in_metadata": true,
+    "arbitrary_code_execution_blocked": true,
+    "path_traversal_blocked": true,
+    "sql_parameterized": true,
+    "recovery_auth_enforced": true,
+    "findings": [
+      {
+        "check": "secrets_isolation",
+        "status": "PASS",
+        "detail": "Database credentials strictly redacted via sanitize_error_message."
+      },
+      {
+        "check": "pii_masking_functions",
+        "status": "PASS",
+        "detail": "Email, phone, and name masking functions correctly obfuscate identifiers."
+      },
+      {
+        "check": "prompt_pii_omission",
+        "status": "PASS",
+        "detail": "Mapping prompt strictly transmits schema metadata and omitted raw PII records."
+      },
+      {
+        "check": "code_injection_resistance",
+        "status": "PASS",
+        "detail": "TransformationStep strictly enforces TransformationOpType enum; arbitrary code strings rejected."
+      },
+      {
+        "check": "path_traversal",
+        "status": "PASS",
+        "detail": "Path traversal attempt safely rejected with explicit typed exception: SourceTransportError"
+      },
+      {
+        "check": "sql_parameterization",
+        "status": "PASS",
+        "detail": "Repository queries strictly parameterize inputs; SQL injection payloads treated as literal values with zero execution risk."
+      },
+      {
+        "check": "recovery_authorization",
+        "status": "PASS",
+        "detail": "FastAPI recovery routes (/release, /reprocess, /discard) strictly reject unauthenticated requests with HTTP 401 Unauthorized."
+      }
+    ]
+  },
+  "performance": [
+    {
+      "dataset_scale": "100_rows",
+      "row_count": 100,
+      "profiling_duration_ms": 8.65,
+      "candidate_generation_duration_ms": 2.23,
+      "transformation_throughput_rows_per_sec": 17799.9,
+      "validation_throughput_rows_per_sec": 71048.0,
+      "scd2_throughput_rows_per_sec": 8619.1,
+      "guardrail_evaluation_ms": 12.88,
+      "end_to_end_duration_ms": 42.73
+    },
+    {
+      "dataset_scale": "1000_rows",
+      "row_count": 1000,
+      "profiling_duration_ms": 14.45,
+      "candidate_generation_duration_ms": 2.28,
+      "transformation_throughput_rows_per_sec": 14341.0,
+      "validation_throughput_rows_per_sec": 51795.5,
+      "scd2_throughput_rows_per_sec": 15979.5,
+      "guardrail_evaluation_ms": 68.18,
+      "end_to_end_duration_ms": 238.93
+    },
+    {
+      "dataset_scale": "5000_rows",
+      "row_count": 5000,
+      "profiling_duration_ms": 35.58,
+      "candidate_generation_duration_ms": 2.6,
+      "transformation_throughput_rows_per_sec": 11981.5,
+      "validation_throughput_rows_per_sec": 62754.2,
+      "scd2_throughput_rows_per_sec": 27393.7,
+      "guardrail_evaluation_ms": 216.29,
+      "end_to_end_duration_ms": 946.65
+    }
+  ],
+  "end_to_end_demo_passed": true,
+  "overall_verdict": "PASS",
+  "limitations": [
+    "Synthetic evaluation fixtures represent batch tabular data; streaming micro-batch latency depends on network & DB IO.",
+    "AI semantic mapping is advisory-only and subject to strict human review; model quality depends on provider availability.",
+    "Cross-table referential integrity evaluation is bounded to configured customer keys.",
+    "In-memory test execution achieves >10,000 rows/sec; live PostgreSQL write throughput is subject to connection pool latency."
+  ]
+}

@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional
+from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from ...config import Settings, get_settings
 from ...db.connection import DatabaseManager
@@ -13,6 +13,7 @@ from ...source import (
     MonitorConfig,
     PostgresSourceAdapter,
     get_default_inventory_monitor_config,
+    get_default_product_master_monitor_config,
     get_monitor_registry,
 )
 from ...source.exceptions import (
@@ -23,6 +24,7 @@ from ...source.exceptions import (
     SourceTableNotFoundError,
     SourceTypeMismatchError,
 )
+from ..auth.dependencies import get_optional_operator
 from ..dependencies import get_db
 from ..schemas import (
     ChangeTimestampSchema,
@@ -30,6 +32,7 @@ from ..schemas import (
     MonitorConfigRequest,
     MonitorConfigResponse,
     MonitorListResponse,
+    MonitorRecordsResponse,
     MonitorValidationResponse,
     PostgresSourceSchema,
 )
@@ -120,7 +123,7 @@ def validate_monitor(
                 primary_keys=[],
             )
     else:
-        config = get_default_inventory_monitor_config(settings=settings)
+        config = get_monitor_registry().get("active") or get_default_product_master_monitor_config(settings=settings)
 
     adapter = PostgresSourceAdapter(config=config, db_manager=db)
     validation_result = adapter.validate_configuration(raise_on_error=False)
@@ -144,3 +147,39 @@ def validate_monitor(
         discovered_columns=col_schemas,
         primary_keys=primary_keys,
     )
+
+
+@router.get(
+    "/{name}/records",
+    response_model=MonitorRecordsResponse,
+    summary="List operational source records for a monitor",
+)
+def list_monitor_records(
+    name: str,
+    limit: int = Query(50, ge=1, le=100, description="Maximum records to return (1-100)."),
+    db: DatabaseManager = Depends(get_db),
+    _operator: Any = Depends(get_optional_operator),
+) -> MonitorRecordsResponse:
+    """Fetch bounded records directly from the configured monitored PostgreSQL table."""
+    registry = get_monitor_registry()
+    config = registry.get(name)
+    if config is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Monitor configuration '{name}' not found.",
+        )
+    adapter = PostgresSourceAdapter(config=config, db_manager=db)
+    try:
+        rows = adapter.read_initial_snapshot(limit=limit)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to read source records for monitor '{name}': {exc}",
+        )
+    return MonitorRecordsResponse(
+        monitor=config.name,
+        records=rows,
+        total=len(rows),
+        limit=limit,
+    )
+

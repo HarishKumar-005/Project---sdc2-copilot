@@ -24,6 +24,13 @@ from ..containment.exceptions import (
 from ..db.connection import DatabaseManager
 from ..db.exceptions import EntityNotFoundError
 
+from ..onboarding.exceptions import (
+    DriftReportNotFoundError,
+    IdempotencyConflictError,
+    InvalidRunStateTransitionError,
+    RunNotFoundError,
+)
+
 from .dependencies import get_db, set_db
 from .routes import (
     health_router,
@@ -32,6 +39,7 @@ from .routes import (
     inventory_router,
     metrics_router,
     monitors_router,
+    onboarding_router,
     runs_router,
 )
 
@@ -199,6 +207,67 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
             },
         )
 
+    @app.exception_handler(IdempotencyConflictError)
+    async def idempotency_conflict_handler(request: Request, exc: IdempotencyConflictError) -> JSONResponse:
+        request_id = getattr(request.state, "request_id", None)
+        return JSONResponse(
+            status_code=status.HTTP_409_CONFLICT,
+            content={
+                "error": {
+                    "code": "IDEMPOTENCY_CONFLICT",
+                    "message": exc.message,
+                    "request_id": request_id,
+                    "details": exc.details,
+                }
+            },
+        )
+
+    @app.exception_handler(InvalidRunStateTransitionError)
+    async def run_transition_handler(request: Request, exc: InvalidRunStateTransitionError) -> JSONResponse:
+        request_id = getattr(request.state, "request_id", None)
+        return JSONResponse(
+            status_code=status.HTTP_409_CONFLICT,
+            content={
+                "error": {
+                    "code": "INVALID_RUN_STATE_TRANSITION",
+                    "message": exc.message,
+                    "request_id": request_id,
+                    "details": exc.details,
+                }
+            },
+        )
+
+    @app.exception_handler(RunNotFoundError)
+    async def run_not_found_handler(request: Request, exc: RunNotFoundError) -> JSONResponse:
+        request_id = getattr(request.state, "request_id", None)
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={
+                "error": {
+                    "code": "RUN_NOT_FOUND",
+                    "message": exc.message,
+                    "request_id": request_id,
+                    "details": exc.details,
+                }
+            },
+        )
+
+    @app.exception_handler(DriftReportNotFoundError)
+    async def drift_report_not_found_handler(request: Request, exc: DriftReportNotFoundError) -> JSONResponse:
+        request_id = getattr(request.state, "request_id", None)
+        return JSONResponse(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content={
+                "error": {
+                    "code": "REPORT_NOT_FOUND",
+                    "message": exc.message,
+                    "request_id": request_id,
+                    "details": exc.details,
+                }
+            },
+        )
+
+
     @app.exception_handler(psycopg.Error)
     async def database_exception_handler(request: Request, exc: psycopg.Error) -> JSONResponse:
         request_id = getattr(request.state, "request_id", None)
@@ -239,6 +308,7 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
     api_v1_router = FastAPI().router
     api_v1_router.prefix = "/api/v1"
     api_v1_router.include_router(runs_router)
+    api_v1_router.include_router(onboarding_router)
     api_v1_router.include_router(holds_router)
     api_v1_router.include_router(history_router)
     api_v1_router.include_router(inventory_router)

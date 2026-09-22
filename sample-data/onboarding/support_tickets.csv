@@ -1,0 +1,7 @@
+ticket_ref,user_identifier,reporter_email,priority_level,created_at,resolved_flag
+TCK-9001,USR-101,alice@work.com,HIGH,2024-01-10T11:20:00Z,true
+TCK-9002,USR-102,bob@corp.com,LOW,2024-01-11T09:15:00Z,false
+TCK-9003,USR-103,,MEDIUM,2024-01-12T14:00:00Z,true
+TCK-9004,USR-104,charlie@lab.org,CRITICAL,2024-01-13T16:30:00Z,false
+TCK-9005,USR-105,dave@sample.net,LOW,2024-01-14T08:45:00Z,true
+TCK-9006,USR-106,eve@test.io,HIGH,2024-01-15T13:10:00Z,true

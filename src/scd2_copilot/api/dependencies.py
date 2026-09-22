@@ -17,8 +17,14 @@ from ..db.repositories import (
     MonitoredEntityHistoryRepository,
     ProcessingRunRepository,
 )
+from ..onboarding.drift.repository import SchemaDriftRepository
+from ..onboarding.drift.service import SchemaDriftService
+from ..onboarding.runs.repository import OnboardingRunRepository
+from ..onboarding.runs.service import OnboardingRunService
 
 _db_manager_instance: Optional[DatabaseManager] = None
+_onboarding_repo_instance: Optional[OnboardingRunRepository] = None
+_drift_repo_instance: Optional[SchemaDriftRepository] = None
 
 
 def get_db(settings: Settings = Depends(get_settings)) -> DatabaseManager:
@@ -86,3 +92,46 @@ def get_containment_service(
         history_repo=history_repo,
         inventory_repo=inventory_repo,
     )
+
+
+def get_onboarding_run_repo(db: DatabaseManager = Depends(get_db)) -> OnboardingRunRepository:
+    """Dependency provider for OnboardingRunRepository."""
+    global _onboarding_repo_instance
+    if _onboarding_repo_instance is None:
+        _onboarding_repo_instance = OnboardingRunRepository(db=db)
+    return _onboarding_repo_instance
+
+
+def set_onboarding_run_repo(repo: Optional[OnboardingRunRepository]) -> None:
+    """Allows tests to override the OnboardingRunRepository singleton."""
+    global _onboarding_repo_instance
+    _onboarding_repo_instance = repo
+
+
+def get_onboarding_run_service(
+    repo: OnboardingRunRepository = Depends(get_onboarding_run_repo),
+) -> OnboardingRunService:
+    """Dependency provider for OnboardingRunService."""
+    return OnboardingRunService(repository=repo)
+
+
+def get_drift_repository(db: DatabaseManager = Depends(get_db)) -> SchemaDriftRepository:
+    """Dependency provider for SchemaDriftRepository."""
+    global _drift_repo_instance
+    if _drift_repo_instance is None:
+        _drift_repo_instance = SchemaDriftRepository(db=db)
+    return _drift_repo_instance
+
+
+def set_drift_repository(repo: Optional[SchemaDriftRepository]) -> None:
+    """Allows tests to override the SchemaDriftRepository singleton."""
+    global _drift_repo_instance
+    _drift_repo_instance = repo
+
+
+def get_drift_service(
+    repo: SchemaDriftRepository = Depends(get_drift_repository),
+) -> SchemaDriftService:
+    """Dependency provider for SchemaDriftService."""
+    return SchemaDriftService(repository=repo)
+

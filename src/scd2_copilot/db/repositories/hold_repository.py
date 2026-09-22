@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from decimal import Decimal
+import json
 import logging
+from threading import RLock
 from typing import Any, Optional
 from uuid import UUID, uuid4
 
@@ -17,10 +20,30 @@ from .base import BaseRepository
 logger = logging.getLogger("scd2_copilot.db.hold")
 
 
+def _safe_json_dumps(obj: Any) -> str:
+    return json.dumps(obj, default=lambda x: float(x) if isinstance(x, Decimal) else str(x))
+
+
 class HeldChangeBatchRepository(BaseRepository):
     """Repository for persisting, tracking, and resolving held change batches."""
 
     TABLE_NAME = "held_change_batch"
+
+    def __init__(
+        self,
+        db: Optional[Any] = None,
+        *,
+        in_memory: bool = False,
+    ) -> None:
+        super().__init__(db=db)
+        self._in_memory = in_memory or (not self.db.is_configured)
+        self._lock = RLock()
+        self._memory_holds: dict[UUID, HeldChangeBatchRow] = {}
+
+    @property
+    def in_memory_mode(self) -> bool:
+        """Return True if running in in-memory mode."""
+        return self._in_memory
 
     def create_hold(
         self,
@@ -39,6 +62,23 @@ class HeldChangeBatchRepository(BaseRepository):
         active_hold_id = hold_id or uuid4()
         now = created_at or datetime.now(timezone.utc)
 
+        if self._in_memory:
+            with self._lock:
+                held_row = HeldChangeBatchRow(
+                    hold_id=active_hold_id,
+                    run_id=run_id,
+                    source_name=source_name,
+                    severity=severity,
+                    reason=reason,
+                    records_affected=records_affected,
+                    evidence=dict(evidence),
+                    status=status,
+                    created_at=now,
+                    resolved_at=None,
+                )
+                self._memory_holds[active_hold_id] = held_row
+                return held_row
+
         query = f"""
             INSERT INTO {self.TABLE_NAME} (
                 hold_id, run_id, source_name, severity, reason,
@@ -54,7 +94,7 @@ class HeldChangeBatchRepository(BaseRepository):
             severity,
             reason,
             records_affected,
-            Jsonb(evidence),
+            Jsonb(evidence, dumps=_safe_json_dumps),
             status,
             now,
         )
@@ -77,6 +117,10 @@ class HeldChangeBatchRepository(BaseRepository):
         conn: Optional[psycopg.Connection[Any]] = None,
     ) -> Optional[HeldChangeBatchRow]:
         """Fetch a specific held change batch by its UUID."""
+        if self._in_memory:
+            with self._lock:
+                return self._memory_holds.get(hold_id)
+
         query = f"""
             SELECT hold_id, run_id, source_name, severity, reason,
                    records_affected, evidence, status, created_at, resolved_at
@@ -100,6 +144,16 @@ class HeldChangeBatchRepository(BaseRepository):
         conn: Optional[psycopg.Connection[Any]] = None,
     ) -> list[HeldChangeBatchRow]:
         """Fetch recent held batches with optional status and source filters."""
+        if self._in_memory:
+            with self._lock:
+                holds = list(self._memory_holds.values())
+                if status:
+                    holds = [h for h in holds if h.status == status]
+                if source_name:
+                    holds = [h for h in holds if h.source_name == source_name]
+                holds.sort(key=lambda h: h.created_at, reverse=True)
+                return holds[:limit]
+
         where_clauses: list[str] = []
         params: list[Any] = []
 
@@ -145,6 +199,26 @@ class HeldChangeBatchRepository(BaseRepository):
             HoldStatus.REJECTED.value,
         ):
             res_time = datetime.now(timezone.utc)
+
+        if self._in_memory:
+            with self._lock:
+                existing = self._memory_holds.get(hold_id)
+                if not existing:
+                    raise EntityNotFoundError(f"Held change batch '{hold_id}' not found", table=self.TABLE_NAME)
+                updated = HeldChangeBatchRow(
+                    hold_id=existing.hold_id,
+                    run_id=existing.run_id,
+                    source_name=existing.source_name,
+                    severity=existing.severity,
+                    reason=existing.reason,
+                    records_affected=existing.records_affected,
+                    evidence=existing.evidence,
+                    status=status,
+                    created_at=existing.created_at,
+                    resolved_at=res_time,
+                )
+                self._memory_holds[hold_id] = updated
+                return updated
 
         query = f"""
             UPDATE {self.TABLE_NAME}
@@ -220,6 +294,26 @@ class HeldChangeBatchRepository(BaseRepository):
         conn: Optional[psycopg.Connection[Any]] = None,
     ) -> HeldChangeBatchRow:
         """Update the JSONB evidence payload for a held change batch."""
+        if self._in_memory:
+            with self._lock:
+                existing = self._memory_holds.get(hold_id)
+                if not existing:
+                    raise EntityNotFoundError(f"Held change batch '{hold_id}' not found", table=self.TABLE_NAME)
+                updated = HeldChangeBatchRow(
+                    hold_id=existing.hold_id,
+                    run_id=existing.run_id,
+                    source_name=existing.source_name,
+                    severity=existing.severity,
+                    reason=existing.reason,
+                    records_affected=existing.records_affected,
+                    evidence=dict(evidence),
+                    status=existing.status,
+                    created_at=existing.created_at,
+                    resolved_at=existing.resolved_at,
+                )
+                self._memory_holds[hold_id] = updated
+                return updated
+
         query = f"""
             UPDATE {self.TABLE_NAME}
             SET evidence = %s
@@ -260,6 +354,13 @@ class HeldChangeBatchRepository(BaseRepository):
         conn: Optional[psycopg.Connection[Any]] = None,
     ) -> int:
         """Count the number of unresolved (status = 'HELD') batches."""
+        if self._in_memory:
+            with self._lock:
+                holds = [h for h in self._memory_holds.values() if h.status == HoldStatus.HELD.value]
+                if source_name:
+                    holds = [h for h in holds if h.source_name == source_name]
+                return len(holds)
+
         where_clause = "WHERE status = %s"
         params: list[Any] = [HoldStatus.HELD.value]
         if source_name:
@@ -282,6 +383,18 @@ class HeldChangeBatchRepository(BaseRepository):
         conn: Optional[psycopg.Connection[Any]] = None,
     ) -> dict[str, int]:
         """Return counts of held batches grouped by status."""
+        if self._in_memory:
+            with self._lock:
+                counts = {"held": 0, "released": 0, "discarded": 0, "reprocessed": 0, "total": 0}
+                for h in self._memory_holds.values():
+                    if source_name and h.source_name != source_name:
+                        continue
+                    st_val = str(h.status).lower()
+                    counts["total"] += 1
+                    if st_val in counts:
+                        counts[st_val] += 1
+                return counts
+
         where_clause = "WHERE source_name = %s" if source_name else ""
         params: list[Any] = [source_name] if source_name else []
 

@@ -213,8 +213,8 @@ class Settings(BaseSettings):
     ingestion_enabled: bool = True
     ingestion_batch_size: int = 50
     ingestion_poll_interval_seconds: float = 15.0
-    ingestion_source_name: str = "inventory"
-    ingestion_table_name: str = "inventory_source"
+    ingestion_source_name: str = "product_master"
+    ingestion_table_name: str = "product_master"
     ingestion_retry_count: int = 3
     ingestion_retry_backoff_seconds: float = 2.0
 

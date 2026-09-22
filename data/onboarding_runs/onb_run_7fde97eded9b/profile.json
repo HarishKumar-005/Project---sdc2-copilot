@@ -1,0 +1,35 @@
+{
+  "source_id": "crm_src",
+  "fingerprint_hash": "5824858fa27ca069002e21a372fc9d7a4210047241fa72b1caed9fee89239d2a",
+  "total_rows": 1,
+  "total_columns": 1,
+  "columns": [
+    {
+      "column_name": "id",
+      "normalized_name": "id",
+      "inferred_type": "integer",
+      "polars_type": "Int64",
+      "total_count": 1,
+      "null_count": 0,
+      "null_rate": 0.0,
+      "distinct_count": 1,
+      "uniqueness_rate": 1.0,
+      "is_unique": true,
+      "min_length": null,
+      "max_length": null,
+      "samples": [
+        "1"
+      ],
+      "top_values": [
+        {
+          "value": "1",
+          "count": 1,
+          "percentage": 100.0
+        }
+      ],
+      "date_patterns": []
+    }
+  ],
+  "profiled_at": "2026-09-19T17:55:01.378935Z",
+  "sampling_policy": "masked"
+}

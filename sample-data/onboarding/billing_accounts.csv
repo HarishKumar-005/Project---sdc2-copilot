@@ -1,0 +1,9 @@
+acct_code,client_full_name,billing_email,balance_due,cycle_day,opened_date,account_state
+ACT-8801,Apex Global,billing@apexglobal.com,12450.50,1,2021-06-15,ACTIVE
+ACT-8802,Beacon Systems,ap@beaconsys.io,0.00,15,2022-01-10,ACTIVE
+ACT-8803,Cascade Media,finance@cascademedia.net,4320.00,1,2020-11-20,DELINQUENT
+ACT-8804,Delta Logistics,,980.25,15,2023-03-01,ACTIVE
+ACT-8805,Echo Ventures,invest@echoventures.co,0.00,1,2019-08-14,CLOSED
+ACT-8806,Frontier AI,billing@frontierai.ai,25000.00,15,2023-09-18,ACTIVE
+ACT-8807,Gamma Labs,accounting@gammalabs.org,150.75,1,2022-05-30,ACTIVE
+ACT-8808,Horizon Health,payables@horizonhealth.org,,15,2021-12-05,PENDING

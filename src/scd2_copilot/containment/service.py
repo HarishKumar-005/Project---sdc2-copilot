@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime, time, timezone
+from decimal import Decimal
 import hashlib
 import json
 import logging
@@ -11,6 +12,21 @@ from uuid import UUID, uuid4
 
 import polars as pl
 import psycopg
+
+
+def _json_safe(val: Any) -> Any:
+    """Recursively convert datetime, UUID, Decimal to JSON-serializable primitives."""
+    if isinstance(val, dict):
+        return {str(k): _json_safe(v) for k, v in val.items()}
+    if isinstance(val, (list, tuple)):
+        return [_json_safe(v) for v in val]
+    if isinstance(val, datetime):
+        return val.isoformat()
+    if isinstance(val, UUID):
+        return str(val)
+    if isinstance(val, Decimal):
+        return float(val)
+    return val
 
 from ..config import Settings, get_settings
 from ..db.connection import DatabaseManager
@@ -250,6 +266,7 @@ class ContainmentService:
             "severity": guardrail_decision.severity.value,
             "batch_records": frozen_records,
         }
+        structured_evidence = _json_safe(structured_evidence)
 
         sev_value = guardrail_decision.severity.value
         reason_summary = (
@@ -293,6 +310,8 @@ class ContainmentService:
 
         if conn is not None:
             new_hold = _persist(conn)
+        elif getattr(self.hold_repo, "in_memory_mode", False) is True:
+            new_hold = _persist(None)
         else:
             with self.db.transaction() as c:
                 new_hold = _persist(c)
@@ -617,6 +636,8 @@ class ContainmentService:
 
         if conn is not None:
             return _execute_release(conn)
+        elif getattr(self.hold_repo, "in_memory_mode", False) is True:
+            return _execute_release(None)
         else:
             with self.db.transaction() as c:
                 return _execute_release(c)
@@ -854,6 +875,8 @@ class ContainmentService:
 
         if conn is not None:
             return _execute_reprocess(conn)
+        elif getattr(self.hold_repo, "in_memory_mode", False) is True:
+            return _execute_reprocess(None)
         else:
             with self.db.transaction() as c:
                 return _execute_reprocess(c)
@@ -965,6 +988,8 @@ class ContainmentService:
 
         if conn is not None:
             return _execute_discard(conn)
+        elif getattr(self.hold_repo, "in_memory_mode", False) is True:
+            return _execute_discard(None)
         else:
             with self.db.transaction() as c:
                 return _execute_discard(c)

@@ -564,17 +564,26 @@ def test_worker_initialization_with_custom_monitor_config():
 
 
 def test_worker_default_inventory_monitor_config_preservation():
-    """IngestionWorker without explicit config defaults to canonical warehouse inventory demo."""
+    """IngestionWorker defaults to active product_master, but preserves inventory when requested."""
     from src.scd2_copilot.worker.worker import IngestionWorker
 
     mock_db = MagicMock()
-    worker = IngestionWorker(db_manager=mock_db)
 
-    assert worker.source_name == "inventory" or "inventory" in worker.source_name
-    assert worker.business_key == ["sku_id", "warehouse_id"]
-    assert worker.tracked_columns == ["quantity_on_hand", "reorder_level", "status"]
-    assert worker.timestamp_column == "updated_at"
-    assert worker.source_adapter is not None
+    # 1. Default worker uses active product_master demo
+    worker_default = IngestionWorker(db_manager=mock_db)
+    assert worker_default.source_name == "product_master"
+    assert worker_default.business_key == ["product_id"]
+    assert worker_default.tracked_columns == ["product_name", "category", "supplier_id", "price", "status"]
+    assert worker_default.timestamp_column == "updated_at"
+    assert worker_default.source_adapter is not None
+
+    # 2. Worker with source_name='inventory' preserves canonical warehouse inventory demo
+    worker_inv = IngestionWorker(db_manager=mock_db, source_name="inventory")
+    assert worker_inv.source_name == "inventory" or "inventory" in worker_inv.source_name
+    assert worker_inv.business_key == ["sku_id", "warehouse_id"]
+    assert worker_inv.tracked_columns == ["quantity_on_hand", "reorder_level", "status"]
+    assert worker_inv.timestamp_column == "updated_at"
+    assert worker_inv.source_adapter is not None
 
 
 # ── 5. FastAPI Endpoints & ApiClient Unit Tests ────────────────────────────

@@ -6,6 +6,7 @@ from .holds import router as holds_router
 from .inventory import router as inventory_router
 from .metrics import router as metrics_router
 from .monitors import router as monitors_router
+from .onboarding import router as onboarding_router
 from .runs import router as runs_router
 
 __all__ = [
@@ -15,5 +16,6 @@ __all__ = [
     "inventory_router",
     "metrics_router",
     "monitors_router",
+    "onboarding_router",
     "runs_router",
 ]

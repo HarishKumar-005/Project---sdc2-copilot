@@ -1,0 +1,150 @@
+{
+  "mapping_version_id": "map_ver_crm_salesforce_v1",
+  "source_id": "crm_salesforce",
+  "source_fingerprint": "632d10757394d60ec2b442e62455749486cf7d15bfd53e83af728dcd11b88679",
+  "source_schema_version": 1,
+  "canonical_schema_name": "customer",
+  "canonical_schema_version": 1,
+  "version_number": 1,
+  "mappings": [
+    {
+      "source_field": "Cust_ID",
+      "target_field": "customer_id",
+      "mapping_type": "DIRECT",
+      "transformations": [],
+      "decision": "OVERRIDE",
+      "reviewer": "data_lead@enterprise.org",
+      "review_notes": "Approved in operator review",
+      "confidence": 1.0,
+      "provenance_reason": "Human override by data_lead@enterprise.org (Approved in operator review)"
+    },
+    {
+      "source_field": "First Name",
+      "target_field": "first_name",
+      "mapping_type": "TRANSFORMED",
+      "transformations": [
+        {
+          "op": "TRIM",
+          "params": {}
+        }
+      ],
+      "decision": "APPROVE",
+      "reviewer": "data_lead@enterprise.org",
+      "review_notes": "Approved in operator review",
+      "confidence": 0.95,
+      "provenance_reason": "Approved proposal: Deterministically matched to canonical 'first_name' based on: exact_alias_match, type_compatible."
+    },
+    {
+      "source_field": "Last Name",
+      "target_field": "last_name",
+      "mapping_type": "TRANSFORMED",
+      "transformations": [
+        {
+          "op": "TRIM",
+          "params": {}
+        }
+      ],
+      "decision": "APPROVE",
+      "reviewer": "data_lead@enterprise.org",
+      "review_notes": "Approved in operator review",
+      "confidence": 0.95,
+      "provenance_reason": "Approved proposal: Deterministically matched to canonical 'last_name' based on: exact_alias_match, type_compatible."
+    },
+    {
+      "source_field": "Contact Email",
+      "target_field": "email",
+      "mapping_type": "TRANSFORMED",
+      "transformations": [
+        {
+          "op": "TRIM",
+          "params": {}
+        },
+        {
+          "op": "NORMALIZE_EMAIL",
+          "params": {}
+        }
+      ],
+      "decision": "APPROVE",
+      "reviewer": "data_lead@enterprise.org",
+      "review_notes": "Approved in operator review",
+      "confidence": 1.0,
+      "provenance_reason": "Approved proposal: Deterministically matched to canonical 'email' based on: exact_alias_match, type_compatible, email_pattern_verified."
+    },
+    {
+      "source_field": "Phone Number",
+      "target_field": null,
+      "mapping_type": "UNMAPPED",
+      "transformations": [],
+      "decision": "REJECT",
+      "reviewer": "data_lead@enterprise.org",
+      "review_notes": "Unmapped column (duplicate or non-canonical target rejected)",
+      "confidence": 1.0,
+      "provenance_reason": "Rejected by data_lead@enterprise.org (Unmapped column (duplicate or non-canonical target rejected))"
+    },
+    {
+      "source_field": "Birth_Date",
+      "target_field": "date_of_birth",
+      "mapping_type": "TRANSFORMED",
+      "transformations": [
+        {
+          "op": "PARSE_DATE",
+          "params": {
+            "format": "%Y-%m-%d"
+          }
+        }
+      ],
+      "decision": "APPROVE",
+      "reviewer": "data_lead@enterprise.org",
+      "review_notes": "Approved in operator review",
+      "confidence": 1.0,
+      "provenance_reason": "Approved proposal: Deterministically matched to canonical 'date_of_birth' based on: exact_alias_match, type_compatible, date_pattern_%Y-%m-%d."
+    },
+    {
+      "source_field": "Cust_Status",
+      "target_field": "status",
+      "mapping_type": "TRANSFORMED",
+      "transformations": [
+        {
+          "op": "TRIM",
+          "params": {}
+        },
+        {
+          "op": "UPPERCASE",
+          "params": {}
+        },
+        {
+          "op": "MAP_ENUM",
+          "params": {}
+        }
+      ],
+      "decision": "APPROVE",
+      "reviewer": "data_lead@enterprise.org",
+      "review_notes": "Approved in operator review",
+      "confidence": 1.0,
+      "provenance_reason": "Approved proposal: Deterministically matched to canonical 'status' based on: exact_alias_match, type_compatible, enum_value_overlap_2."
+    },
+    {
+      "source_field": "Created_Timestamp",
+      "target_field": "created_at",
+      "mapping_type": "TRANSFORMED",
+      "transformations": [
+        {
+          "op": "PARSE_DATE",
+          "params": {
+            "format": "%Y-%m-%dT%H:%M:%SZ"
+          }
+        }
+      ],
+      "decision": "APPROVE",
+      "reviewer": "data_lead@enterprise.org",
+      "review_notes": "Approved in operator review",
+      "confidence": 1.0,
+      "provenance_reason": "Approved proposal: Deterministically matched to canonical 'created_at' based on: exact_alias_match, type_compatible, date_pattern_%Y-%m-%dT%H:%M:%SZ."
+    }
+  ],
+  "is_complete": true,
+  "unmapped_required_fields": [],
+  "approved_by": "data_lead@enterprise.org",
+  "approved_at": "2026-09-20T13:16:56.017729Z",
+  "supersedes_version_id": null
+}

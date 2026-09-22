@@ -1,0 +1,11 @@
+Cust_ID,First Name,Last Name,Contact Email,Phone Number,Birth_Date,Cust_Status,Created_Timestamp
+CUST-1001,Alice,Smith,alice.smith@example.com,555-0101,1985-04-12,ACTIVE,2023-01-15T09:30:00Z
+CUST-1002,Bob,Johnson,bob.j@corporate.org,555-0102,1990-07-21,ACTIVE,2023-02-01T14:15:00Z
+CUST-1003,Charlie,Brown,,555-0103,1978-11-03,INACTIVE,2023-02-15T11:00:00Z
+CUST-1004,Diana,Prince,diana@themyscira.com,555-0104,,PENDING,2023-03-10T16:45:00Z
+CUST-1005,Evan,Wright,evan.w@techcorp.io,555-0105,1995-12-30,ACTIVE,2023-04-05T08:20:00Z
+CUST-1006,Fiona,Gallagher,fiona@shamrock.net,,1988-03-14,SUSPENDED,2023-05-12T10:00:00Z
+CUST-1007,George,Clark,george.c@clark.org,555-0107,1965-09-25,ACTIVE,2023-06-01T12:00:00Z
+CUST-1008,Hannah,Abbott,hannah@botany.ac.uk,555-0108,1992-06-18,ACTIVE,2023-07-04T15:30:00Z
+CUST-1009,Ian,Malcolm,ian.chaos@dino.edu,555-0109,1972-01-05,INACTIVE,2023-08-19T13:45:00Z
+CUST-1010,Julia,Roberts,julia.r@hollywood.com,555-0110,1967-10-28,ACTIVE,2023-09-23T17:10:00Z

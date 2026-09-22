@@ -21,6 +21,7 @@ from .schemas import (
     MonitorConfigRequest,
     MonitorConfigResponse,
     MonitorListResponse,
+    MonitorRecordsResponse,
     MonitorValidationResponse,
     OperationalMetricsResponse,
     ReadinessResponse,
@@ -374,6 +375,15 @@ class ApiClient:
         """Call POST /api/v1/monitors/validate."""
         data = self._request("POST", "/api/v1/monitors/validate", json_data=config)
         return MonitorValidationResponse(**data)
+
+    def list_monitor_records(
+        self,
+        name: str = "active",
+        limit: int = 50,
+    ) -> MonitorRecordsResponse:
+        """Call GET /api/v1/monitors/{name}/records."""
+        data = self._request("GET", f"/api/v1/monitors/{name}/records", params={"limit": limit})
+        return MonitorRecordsResponse(**data)
 
     def close(self) -> None:
         """Close the underlying HTTP client."""

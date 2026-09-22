@@ -1,0 +1,74 @@
+[
+  {
+    "acct_code": "ACT-8801",
+    "client_full_name": "Apex Global",
+    "billing_email": "billing@apexglobal.com",
+    "balance_due": 12450.50,
+    "cycle_day": 1,
+    "opened_date": "2021-06-15",
+    "account_state": "ACTIVE"
+  },
+  {
+    "acct_code": "ACT-8802",
+    "client_full_name": "Beacon Systems",
+    "billing_email": "ap@beaconsys.io",
+    "balance_due": 0.0,
+    "cycle_day": 15,
+    "opened_date": "2022-01-10",
+    "account_state": "ACTIVE"
+  },
+  {
+    "acct_code": "ACT-8803",
+    "client_full_name": "Cascade Media",
+    "billing_email": "finance@cascademedia.net",
+    "balance_due": 4320.0,
+    "cycle_day": 1,
+    "opened_date": "2020-11-20",
+    "account_state": "DELINQUENT"
+  },
+  {
+    "acct_code": "ACT-8804",
+    "client_full_name": "Delta Logistics",
+    "billing_email": null,
+    "balance_due": 980.25,
+    "cycle_day": 15,
+    "opened_date": "2023-03-01",
+    "account_state": "ACTIVE"
+  },
+  {
+    "acct_code": "ACT-8805",
+    "client_full_name": "Echo Ventures",
+    "billing_email": "invest@echoventures.co",
+    "balance_due": 0.0,
+    "cycle_day": 1,
+    "opened_date": "2019-08-14",
+    "account_state": "CLOSED"
+  },
+  {
+    "acct_code": "ACT-8806",
+    "client_full_name": "Frontier AI",
+    "billing_email": "billing@frontierai.ai",
+    "balance_due": 25000.0,
+    "cycle_day": 15,
+    "opened_date": "2023-09-18",
+    "account_state": "ACTIVE"
+  },
+  {
+    "acct_code": "ACT-8807",
+    "client_full_name": "Gamma Labs",
+    "billing_email": "accounting@gammalabs.org",
+    "balance_due": 150.75,
+    "cycle_day": 1,
+    "opened_date": "2022-05-30",
+    "account_state": "ACTIVE"
+  },
+  {
+    "acct_code": "ACT-8808",
+    "client_full_name": "Horizon Health",
+    "billing_email": "payables@horizonhealth.org",
+    "balance_due": null,
+    "cycle_day": 15,
+    "opened_date": "2021-12-05",
+    "account_state": "PENDING"
+  }
+]

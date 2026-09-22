@@ -48,6 +48,10 @@ from src.scd2_copilot.schema import detect_business_key, detect_tracked_columns
 from src.scd2_copilot.workflow import run_pipeline
 
 from v2_monitor import render_v2_live_monitor
+try:
+    from onboarding_ui import render_customer_onboarding_app
+except ImportError:
+    from app.onboarding_ui import render_customer_onboarding_app
 from ui_components import (
     _icon,
     inject_theme,
@@ -156,6 +160,10 @@ inject_theme()
 # ── Handle OAuth Callback (Supabase PKCE code exchange) ─
 handle_auth_callback()
 
+# ── Local / Dev Authentication Bypass ─────────────────
+if hasattr(st, "query_params") and st.query_params.get("skip_auth") in ("true", "1", "yes"):
+    st.session_state["dev_bypass_authenticated"] = True
+
 # ── Authentication Gate (Supabase Auth) ────────────────
 if not is_user_logged_in():
     render_login_gate()
@@ -191,25 +199,30 @@ with st.sidebar:
     st.markdown("### Platform Mode")
     app_mode = st.radio(
         "Select Operating Mode",
-        ["⚡ Live Guardrail Monitor (V2)", "📁 Batch CSV Analysis (V1)"],
+        [
+            "🚀 Customer Data Onboarding & Guardrail",
+            "⚡ Live Guardrail Monitor (V2)",
+            "📁 Batch CSV Analysis (V1)",
+        ],
         index=0,
         key="platform_mode_selector",
         label_visibility="collapsed",
     )
-    st.divider()
-    st.markdown("### SCD2 Copilot")
-    st.caption("AI-Assisted Data Change & Historical Analytics Platform")
-    st.markdown(
-        """
-        - **Engine:** Polars (Vectorized)
-        - **Validator:** 5 Invariant Rules
-        - **Orchestration:** Prefect 3
-        - **Idempotency:** SHA-256 Fingerprint
-        - **Persistence:** Parquet & JSON / Supabase
-        """
-    )
-    st.divider()
-    st.caption("Switch modes anytime via the selector above.")
+    if app_mode != "🚀 Customer Data Onboarding & Guardrail":
+        st.divider()
+        st.markdown("### SCD2 Copilot")
+        st.caption("AI-Assisted Data Change & Historical Analytics Platform")
+        st.markdown(
+            """
+            - **Engine:** Polars (Vectorized)
+            - **Validator:** 5 Invariant Rules
+            - **Orchestration:** Prefect 3
+            - **Idempotency:** SHA-256 Fingerprint
+            - **Persistence:** Parquet & JSON / Supabase
+            """
+        )
+        st.divider()
+        st.caption("Switch modes anytime via the selector above.")
 
 def render_v1_batch_mode(
     current_user: Optional[AuthenticatedUser],
@@ -720,7 +733,9 @@ def render_v1_batch_mode(
 
 
 # ── Mode Routing ──────────────────────────────────────
-if app_mode == "⚡ Live Guardrail Monitor (V2)":
+if app_mode == "🚀 Customer Data Onboarding & Guardrail":
+    render_customer_onboarding_app()
+elif app_mode == "⚡ Live Guardrail Monitor (V2)":
     render_v2_live_monitor(current_user=current_user, settings=settings)
 else:
     render_v1_batch_mode(

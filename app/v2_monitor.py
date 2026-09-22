@@ -131,7 +131,7 @@ def render_v2_live_monitor(current_user: Optional[AuthenticatedUser], settings: 
             "🛡️ Containment Queue",
             "⚡ Processing Runs",
             "📜 SCD2 History Explorer",
-            "📦 Operational Source Inventory",
+            "📦 Operational Source Records",
             "⚙️ Source Configuration",
         ]
     )
@@ -564,35 +564,48 @@ def _render_generic_history_lookup(api_client: ApiClient, monitor_config: Any) -
 
 
 def _render_inventory_tab(api_client: ApiClient) -> None:
-    """Render real-time snapshot of the upstream inventory_source table."""
-    st.markdown("#### Upstream Source Inventory (`inventory_source`)")
+    """Render real-time snapshot of the upstream operational source records."""
+    # Attempt to read from the active monitor first
+    monitor_name = "product_master"
+    source_desc = "public.product_master"
+    records_data = []
+
+    try:
+        active_mon = api_client.get_monitor("active")
+        monitor_name = active_mon.name
+        source_desc = f"{active_mon.source.schema_name}.{active_mon.source.table_name}"
+        records_resp = api_client.list_monitor_records(name=monitor_name, limit=100)
+        records_data = records_resp.records
+    except Exception as exc:
+        logger.debug("Failed to list active monitor records: %s. Falling back to inventory API.", exc)
+        try:
+            inv_resp = api_client.list_inventory(limit=100)
+            for r in inv_resp.records:
+                records_data.append({
+                    "sku_id": r.sku_id,
+                    "warehouse_id": r.warehouse_id,
+                    "quantity_on_hand": r.quantity_on_hand,
+                    "reorder_level": r.reorder_level,
+                    "status": r.status,
+                    "updated_at": r.updated_at,
+                })
+            source_desc = "public.inventory_source"
+            monitor_name = "warehouse_inventory"
+        except Exception as inner_exc:
+            st.error(f"Failed to fetch upstream source records: {inner_exc}")
+            return
+
+    st.markdown(f"#### Upstream Operational Source Records (`{source_desc}`)")
     st.caption(
         "Live view of the source records currently residing in Supabase PostgreSQL before incremental ingestion."
     )
 
-    try:
-        inv_resp = api_client.list_inventory(limit=100)
-        records = inv_resp.records
-    except Exception as exc:
-        st.error(f"Failed to fetch source inventory: {exc}")
+    if not records_data:
+        st.info("No records found in upstream source table.")
         return
 
-    if not records:
-        st.info("No records in source inventory.")
-        return
-
-    rows = []
-    for r in records:
-        rows.append({
-            "SKU ID": r.sku_id,
-            "Warehouse ID": r.warehouse_id,
-            "Qty on Hand": r.quantity_on_hand,
-            "Reorder Level": r.reorder_level,
-            "Status": r.status,
-            "Updated At": str(r.updated_at)[:19] if r.updated_at else "—",
-        })
-
-    df = pl.DataFrame(rows)
+    # Render as formatted Polars DataFrame
+    df = pl.DataFrame(records_data)
     st.dataframe(df, width="stretch")
 
 
@@ -604,16 +617,16 @@ def _render_source_config_tab(api_client: ApiClient, settings: Settings) -> None
         "business keys, change timestamp, and tracked attributes for incremental SCD2 processing."
     )
 
-    # 1. Fetch monitor configuration
-    monitor_name = "warehouse_inventory"
+    # 1. Fetch monitor configuration (prefer active demonstration monitor)
+    monitor_name = "product_master"
     schema_name = "public"
-    table_name = settings.ingestion_table_name or "inventory_source"
-    business_keys = ["sku_id", "warehouse_id"]
+    table_name = settings.ingestion_table_name or "product_master"
+    business_keys = ["product_id"]
     change_ts = "updated_at"
-    tracked_cols = ["quantity_on_hand", "reorder_level", "status"]
+    tracked_cols = ["product_name", "category", "supplier_id", "price", "status"]
 
     try:
-        cfg_resp = api_client.get_monitor("default")
+        cfg_resp = api_client.get_monitor("active")
         monitor_name = cfg_resp.name
         schema_name = cfg_resp.source.schema_name
         table_name = cfg_resp.source.table_name
@@ -622,6 +635,7 @@ def _render_source_config_tab(api_client: ApiClient, settings: Settings) -> None
         tracked_cols = cfg_resp.tracked_columns
     except Exception as exc:
         logger.debug("Failed to fetch monitor config via API: %s", exc)
+
 
     # 2. Display Configuration Cards
     col_c1, col_c2 = st.columns(2)

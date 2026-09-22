@@ -1,0 +1,217 @@
+{
+  "source_id": "crm_salesforce",
+  "mapping_version_id": "map_ver_crm_salesforce_v1",
+  "canonical_schema_name": "customer",
+  "canonical_schema_version": 1,
+  "total_records": 10,
+  "valid_record_count": 7,
+  "invalid_record_count": 3,
+  "valid_records": [
+    {
+      "customer_id": "CUST-1001",
+      "first_name": "Alice",
+      "last_name": "Smith",
+      "email": "alice.smith@example.com",
+      "date_of_birth": "1985-04-12",
+      "status": "ACTIVE",
+      "created_at": "2023-01-15T00:00:00Z"
+    },
+    {
+      "customer_id": "CUST-1002",
+      "first_name": "Bob",
+      "last_name": "Johnson",
+      "email": "bob.j@corporate.org",
+      "date_of_birth": "1990-07-21",
+      "status": "ACTIVE",
+      "created_at": "2023-02-01T00:00:00Z"
+    },
+    {
+      "customer_id": "CUST-1005",
+      "first_name": "Evan",
+      "last_name": "Wright",
+      "email": "evan.w@techcorp.io",
+      "date_of_birth": "1995-12-30",
+      "status": "ACTIVE",
+      "created_at": "2023-04-05T00:00:00Z"
+    },
+    {
+      "customer_id": "CUST-1007",
+      "first_name": "George",
+      "last_name": "Clark",
+      "email": "george.c@clark.org",
+      "date_of_birth": "1965-09-25",
+      "status": "ACTIVE",
+      "created_at": "2023-06-01T00:00:00Z"
+    },
+    {
+      "customer_id": "CUST-1008",
+      "first_name": "Hannah",
+      "last_name": "Abbott",
+      "email": "hannah@botany.ac.uk",
+      "date_of_birth": "1992-06-18",
+      "status": "ACTIVE",
+      "created_at": "2023-07-04T00:00:00Z"
+    },
+    {
+      "customer_id": "CUST-1009",
+      "first_name": "Ian",
+      "last_name": "Malcolm",
+      "email": "ian.chaos@dino.edu",
+      "date_of_birth": "1972-01-05",
+      "status": "INACTIVE",
+      "created_at": "2023-08-19T00:00:00Z"
+    },
+    {
+      "customer_id": "CUST-1010",
+      "first_name": "Julia",
+      "last_name": "Roberts",
+      "email": "julia.r@hollywood.com",
+      "date_of_birth": "1967-10-28",
+      "status": "ACTIVE",
+      "created_at": "2023-09-23T00:00:00Z"
+    }
+  ],
+  "invalid_records": [
+    {
+      "row_index": 2,
+      "source_record_id": "CUST-1003",
+      "raw_values": {
+        "Cust_ID": "CUST-1003",
+        "First Name": "Charlie",
+        "Last Name": "Brown",
+        "Contact Email": null,
+        "Phone Number": "555-0103",
+        "Birth_Date": "1978-11-03",
+        "Cust_Status": "INACTIVE",
+        "Created_Timestamp": "2023-02-15T11:00:00Z"
+      },
+      "canonical_values": {
+        "customer_id": "CUST-1003",
+        "first_name": "Charlie",
+        "last_name": "Brown",
+        "email": null,
+        "date_of_birth": "1978-11-03",
+        "status": "INACTIVE",
+        "created_at": "2023-02-15"
+      },
+      "is_valid": false,
+      "errors": [
+        {
+          "row_index": 2,
+          "record_id": "CUST-1003",
+          "rule_id": "EMAIL_REQUIRED",
+          "category": "REQUIRED",
+          "field": "email",
+          "observed_value": null,
+          "reason": "Mandatory canonical field 'email' is missing or blank.",
+          "severity": "BLOCKING"
+        }
+      ]
+    },
+    {
+      "row_index": 3,
+      "source_record_id": "CUST-1004",
+      "raw_values": {
+        "Cust_ID": "CUST-1004",
+        "First Name": "Diana",
+        "Last Name": "Prince",
+        "Contact Email": "diana@themyscira.com",
+        "Phone Number": "555-0104",
+        "Birth_Date": null,
+        "Cust_Status": "PENDING",
+        "Created_Timestamp": "2023-03-10T16:45:00Z"
+      },
+      "canonical_values": {
+        "customer_id": "CUST-1004",
+        "first_name": "Diana",
+        "last_name": "Prince",
+        "email": "diana@themyscira.com",
+        "date_of_birth": null,
+        "status": "PENDING",
+        "created_at": "2023-03-10"
+      },
+      "is_valid": false,
+      "errors": [
+        {
+          "row_index": 3,
+          "record_id": "CUST-1004",
+          "rule_id": "STATUS_ENUM",
+          "category": "ENUM",
+          "field": "status",
+          "observed_value": "PENDING",
+          "reason": "Status value 'PENDING' is not in allowed canonical enum values: ['ACTIVE', 'INACTIVE'].",
+          "severity": "BLOCKING"
+        }
+      ]
+    },
+    {
+      "row_index": 5,
+      "source_record_id": "CUST-1006",
+      "raw_values": {
+        "Cust_ID": "CUST-1006",
+        "First Name": "Fiona",
+        "Last Name": "Gallagher",
+        "Contact Email": "fiona@shamrock.net",
+        "Phone Number": null,
+        "Birth_Date": "1988-03-14",
+        "Cust_Status": "SUSPENDED",
+        "Created_Timestamp": "2023-05-12T10:00:00Z"
+      },
+      "canonical_values": {
+        "customer_id": "CUST-1006",
+        "first_name": "Fiona",
+        "last_name": "Gallagher",
+        "email": "fiona@shamrock.net",
+        "date_of_birth": "1988-03-14",
+        "status": "SUSPENDED",
+        "created_at": "2023-05-12"
+      },
+      "is_valid": false,
+      "errors": [
+        {
+          "row_index": 5,
+          "record_id": "CUST-1006",
+          "rule_id": "STATUS_ENUM",
+          "category": "ENUM",
+          "field": "status",
+          "observed_value": "SUSPENDED",
+          "reason": "Status value 'SUSPENDED' is not in allowed canonical enum values: ['ACTIVE', 'INACTIVE'].",
+          "severity": "BLOCKING"
+        }
+      ]
+    }
+  ],
+  "all_errors": [
+    {
+      "row_index": 2,
+      "record_id": "CUST-1003",
+      "rule_id": "EMAIL_REQUIRED",
+      "category": "REQUIRED",
+      "field": "email",
+      "observed_value": null,
+      "reason": "Mandatory canonical field 'email' is missing or blank.",
+      "severity": "BLOCKING"
+    },
+    {
+      "row_index": 3,
+      "record_id": "CUST-1004",
+      "rule_id": "STATUS_ENUM",
+      "category": "ENUM",
+      "field": "status",
+      "observed_value": "PENDING",
+      "reason": "Status value 'PENDING' is not in allowed canonical enum values: ['ACTIVE', 'INACTIVE'].",
+      "severity": "BLOCKING"
+    },
+    {
+      "row_index": 5,
+      "record_id": "CUST-1006",
+      "rule_id": "STATUS_ENUM",
+      "category": "ENUM",
+      "field": "status",
+      "observed_value": "SUSPENDED",
+      "reason": "Status value 'SUSPENDED' is not in allowed canonical enum values: ['ACTIVE', 'INACTIVE'].",
+      "severity": "BLOCKING"
+    }
+  ],
+  "executed_at": "2026-09-20T14:33:55.127353Z"
+}

@@ -1,0 +1,98 @@
+{
+  "mapping_version_id": "m1",
+  "source_id": "s1",
+  "source_fingerprint": "fp1",
+  "source_schema_version": 1,
+  "canonical_schema_name": "customer",
+  "canonical_schema_version": 1,
+  "version_number": 1,
+  "mappings": [
+    {
+      "source_field": "id",
+      "target_field": "customer_id",
+      "mapping_type": "DIRECT",
+      "transformations": [],
+      "decision": "APPROVE",
+      "reviewer": "u",
+      "review_notes": null,
+      "confidence": 1.0,
+      "provenance_reason": "r"
+    },
+    {
+      "source_field": "fname",
+      "target_field": "first_name",
+      "mapping_type": "DIRECT",
+      "transformations": [],
+      "decision": "APPROVE",
+      "reviewer": "u",
+      "review_notes": null,
+      "confidence": 1.0,
+      "provenance_reason": "r"
+    },
+    {
+      "source_field": "lname",
+      "target_field": "last_name",
+      "mapping_type": "DIRECT",
+      "transformations": [],
+      "decision": "APPROVE",
+      "reviewer": "u",
+      "review_notes": null,
+      "confidence": 1.0,
+      "provenance_reason": "r"
+    },
+    {
+      "source_field": "email_addr",
+      "target_field": "email",
+      "mapping_type": "DIRECT",
+      "transformations": [],
+      "decision": "APPROVE",
+      "reviewer": "u",
+      "review_notes": null,
+      "confidence": 1.0,
+      "provenance_reason": "r"
+    },
+    {
+      "source_field": "dob",
+      "target_field": "date_of_birth",
+      "mapping_type": "DIRECT",
+      "transformations": [],
+      "decision": "APPROVE",
+      "reviewer": "u",
+      "review_notes": null,
+      "confidence": 1.0,
+      "provenance_reason": "r"
+    },
+    {
+      "source_field": "cust_status",
+      "target_field": "status",
+      "mapping_type": "DIRECT",
+      "transformations": [],
+      "decision": "APPROVE",
+      "reviewer": "u",
+      "review_notes": null,
+      "confidence": 1.0,
+      "provenance_reason": "r"
+    },
+    {
+      "source_field": "signup_date",
+      "target_field": "created_at",
+      "mapping_type": "TRANSFORMED",
+      "transformations": [
+        {
+          "op": "PARSE_DATE",
+          "params": {}
+        }
+      ],
+      "decision": "APPROVE",
+      "reviewer": "u",
+      "review_notes": null,
+      "confidence": 1.0,
+      "provenance_reason": "r"
+    }
+  ],
+  "is_complete": true,
+  "unmapped_required_fields": [],
+  "approved_by": "u",
+  "approved_at": "2026-09-19T11:05:18.593313Z",
+  "supersedes_version_id": null
+}

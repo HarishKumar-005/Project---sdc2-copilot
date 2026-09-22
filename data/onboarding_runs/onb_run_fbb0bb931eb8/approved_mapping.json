@@ -1,0 +1,138 @@
+{
+  "mapping_version_id": "map_dataset_b_moderately_messy_v1",
+  "source_id": "dataset_b_moderately_messy",
+  "source_fingerprint": "1b1647a571d1bb1e7ad1c02a557c32806ca3a6046a2239761a9988c9a9e56da6",
+  "source_schema_version": 1,
+  "canonical_schema_name": "customer",
+  "canonical_schema_version": 1,
+  "version_number": 1,
+  "mappings": [
+    {
+      "source_field": "cust_no",
+      "target_field": "customer_id",
+      "mapping_type": "TRANSFORMED",
+      "transformations": [
+        {
+          "op": "TRIM",
+          "params": {}
+        }
+      ],
+      "decision": "APPROVE",
+      "reviewer": "evaluator@scd2.test",
+      "review_notes": null,
+      "confidence": 1.0,
+      "provenance_reason": "Ground truth mapping rule"
+    },
+    {
+      "source_field": "first_name",
+      "target_field": "first_name",
+      "mapping_type": "TRANSFORMED",
+      "transformations": [
+        {
+          "op": "TRIM",
+          "params": {}
+        }
+      ],
+      "decision": "APPROVE",
+      "reviewer": "evaluator@scd2.test",
+      "review_notes": null,
+      "confidence": 1.0,
+      "provenance_reason": "Ground truth mapping rule"
+    },
+    {
+      "source_field": "last_name",
+      "target_field": "last_name",
+      "mapping_type": "TRANSFORMED",
+      "transformations": [
+        {
+          "op": "TRIM",
+          "params": {}
+        }
+      ],
+      "decision": "APPROVE",
+      "reviewer": "evaluator@scd2.test",
+      "review_notes": null,
+      "confidence": 1.0,
+      "provenance_reason": "Ground truth mapping rule"
+    },
+    {
+      "source_field": "email_address",
+      "target_field": "email",
+      "mapping_type": "TRANSFORMED",
+      "transformations": [
+        {
+          "op": "TRIM",
+          "params": {}
+        },
+        {
+          "op": "NORMALIZE_EMAIL",
+          "params": {}
+        }
+      ],
+      "decision": "APPROVE",
+      "reviewer": "evaluator@scd2.test",
+      "review_notes": null,
+      "confidence": 1.0,
+      "provenance_reason": "Ground truth mapping rule"
+    },
+    {
+      "source_field": "dob",
+      "target_field": "date_of_birth",
+      "mapping_type": "TRANSFORMED",
+      "transformations": [
+        {
+          "op": "PARSE_DATE",
+          "params": {}
+        }
+      ],
+      "decision": "APPROVE",
+      "reviewer": "evaluator@scd2.test",
+      "review_notes": null,
+      "confidence": 1.0,
+      "provenance_reason": "Ground truth mapping rule"
+    },
+    {
+      "source_field": "acct_status",
+      "target_field": "status",
+      "mapping_type": "TRANSFORMED",
+      "transformations": [
+        {
+          "op": "MAP_ENUM",
+          "params": {
+            "enum_map": {
+              "A": "ACTIVE",
+              "I": "INACTIVE",
+              "S": "SUSPENDED"
+            }
+          }
+        }
+      ],
+      "decision": "APPROVE",
+      "reviewer": "evaluator@scd2.test",
+      "review_notes": null,
+      "confidence": 1.0,
+      "provenance_reason": "Ground truth mapping rule"
+    },
+    {
+      "source_field": "signup_date",
+      "target_field": "created_at",
+      "mapping_type": "TRANSFORMED",
+      "transformations": [
+        {
+          "op": "PARSE_DATE",
+          "params": {}
+        }
+      ],
+      "decision": "APPROVE",
+      "reviewer": "evaluator@scd2.test",
+      "review_notes": null,
+      "confidence": 1.0,
+      "provenance_reason": "Ground truth mapping rule"
+    }
+  ],
+  "is_complete": true,
+  "unmapped_required_fields": [],
+  "approved_by": "evaluator@scd2.test",
+  "approved_at": "2026-09-19T18:20:00.827863Z",
+  "supersedes_version_id": null
+}

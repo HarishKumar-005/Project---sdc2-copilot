@@ -1,0 +1,97 @@
+{
+  "source_id": "dataset_b_moderately_messy",
+  "mapping_version_id": "map_dataset_b_moderately_messy_v1",
+  "canonical_schema_name": "customer",
+  "canonical_schema_version": 1,
+  "total_records": 5,
+  "valid_record_count": 4,
+  "invalid_record_count": 1,
+  "valid_records": [
+    {
+      "customer_id": "CUST-B0001",
+      "first_name": "Bob1",
+      "last_name": "Smith1",
+      "email": "user.b1@example.com",
+      "date_of_birth": "1988-04-12",
+      "status": "INACTIVE",
+      "created_at": "2026-02-15T00:00:00Z"
+    },
+    {
+      "customer_id": "CUST-B0002",
+      "first_name": "Bob2",
+      "last_name": "Smith2",
+      "email": "user.b2@example.com",
+      "date_of_birth": "1988-04-12",
+      "status": "ACTIVE",
+      "created_at": "2026-02-15T00:00:00Z"
+    },
+    {
+      "customer_id": "CUST-B0004",
+      "first_name": "Bob4",
+      "last_name": "Smith4",
+      "email": "user.b4@example.com",
+      "date_of_birth": "1988-04-12",
+      "status": "ACTIVE",
+      "created_at": "2026-02-15T00:00:00Z"
+    },
+    {
+      "customer_id": "CUST-B0005",
+      "first_name": "Bob5",
+      "last_name": "Smith5",
+      "email": "user.b5@example.com",
+      "date_of_birth": "1988-04-12",
+      "status": "INACTIVE",
+      "created_at": "2026-02-15T00:00:00Z"
+    }
+  ],
+  "invalid_records": [
+    {
+      "row_index": 2,
+      "source_record_id": "  CUST-B0003  ",
+      "raw_values": {
+        "cust_no": "  CUST-B0003  ",
+        "first_name": " Bob3 ",
+        "last_name": " Smith3 ",
+        "email_address": "  not-an-email  ",
+        "dob": "1988-04-12",
+        "acct_status": "I",
+        "signup_date": "2026-02-15 09:30:00"
+      },
+      "canonical_values": {
+        "customer_id": "CUST-B0003",
+        "first_name": "Bob3",
+        "last_name": "Smith3",
+        "email": "not-an-email",
+        "date_of_birth": "1988-04-12",
+        "status": "INACTIVE",
+        "created_at": "2026-02-15"
+      },
+      "is_valid": false,
+      "errors": [
+        {
+          "row_index": 2,
+          "record_id": "CUST-B0003",
+          "rule_id": "EMAIL_FORMAT",
+          "category": "FORMAT",
+          "field": "email",
+          "observed_value": "not-an-email",
+          "reason": "Email 'not-an-email' does not match canonical email format (name@domain.tld).",
+          "severity": "BLOCKING"
+        }
+      ]
+    }
+  ],
+  "all_errors": [
+    {
+      "row_index": 2,
+      "record_id": "CUST-B0003",
+      "rule_id": "EMAIL_FORMAT",
+      "category": "FORMAT",
+      "field": "email",
+      "observed_value": "not-an-email",
+      "reason": "Email 'not-an-email' does not match canonical email format (name@domain.tld).",
+      "severity": "BLOCKING"
+    }
+  ],
+  "executed_at": "2026-09-19T18:14:45.652454Z"
+}

@@ -1,0 +1,32 @@
+{
+  "source_id": "s1",
+  "mapping_version_id": "m1",
+  "canonical_schema_name": "customer",
+  "canonical_schema_version": 1,
+  "total_records": 2,
+  "valid_record_count": 2,
+  "invalid_record_count": 0,
+  "valid_records": [
+    {
+      "customer_id": "C-1",
+      "first_name": "A",
+      "last_name": "X",
+      "email": "a@x.com",
+      "date_of_birth": "1990-01-01",
+      "status": "ACTIVE",
+      "created_at": "2026-01-01T00:00:00Z"
+    },
+    {
+      "customer_id": "C-2",
+      "first_name": "B",
+      "last_name": "Y",
+      "email": "b@y.com",
+      "date_of_birth": "1990-01-01",
+      "status": "ACTIVE",
+      "created_at": "2026-01-01T00:00:00Z"
+    }
+  ],
+  "invalid_records": [],
+  "all_errors": [],
+  "executed_at": "2026-09-19T11:05:33.899434Z"
+}

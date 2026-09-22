@@ -1,0 +1,102 @@
+[
+  {
+    "Cust_ID": "CUST-1001",
+    "First Name": "Alice",
+    "Last Name": "Smith",
+    "Contact Email": "alice.smith@example.com",
+    "Phone Number": "555-0101",
+    "Birth_Date": "1985-04-12",
+    "Cust_Status": "ACTIVE",
+    "Created_Timestamp": "2023-01-15T09:30:00Z"
+  },
+  {
+    "Cust_ID": "CUST-1002",
+    "First Name": "Bob",
+    "Last Name": "Johnson",
+    "Contact Email": "bob.j@corporate.org",
+    "Phone Number": "555-0102",
+    "Birth_Date": "1990-07-21",
+    "Cust_Status": "ACTIVE",
+    "Created_Timestamp": "2023-02-01T14:15:00Z"
+  },
+  {
+    "Cust_ID": "CUST-1003",
+    "First Name": "Charlie",
+    "Last Name": "Brown",
+    "Contact Email": null,
+    "Phone Number": "555-0103",
+    "Birth_Date": "1978-11-03",
+    "Cust_Status": "INACTIVE",
+    "Created_Timestamp": "2023-02-15T11:00:00Z"
+  },
+  {
+    "Cust_ID": "CUST-1004",
+    "First Name": "Diana",
+    "Last Name": "Prince",
+    "Contact Email": "diana@themyscira.com",
+    "Phone Number": "555-0104",
+    "Birth_Date": null,
+    "Cust_Status": "PENDING",
+    "Created_Timestamp": "2023-03-10T16:45:00Z"
+  },
+  {
+    "Cust_ID": "CUST-1005",
+    "First Name": "Evan",
+    "Last Name": "Wright",
+    "Contact Email": "evan.w@techcorp.io",
+    "Phone Number": "555-0105",
+    "Birth_Date": "1995-12-30",
+    "Cust_Status": "ACTIVE",
+    "Created_Timestamp": "2023-04-05T08:20:00Z"
+  },
+  {
+    "Cust_ID": "CUST-1006",
+    "First Name": "Fiona",
+    "Last Name": "Gallagher",
+    "Contact Email": "fiona@shamrock.net",
+    "Phone Number": null,
+    "Birth_Date": "1988-03-14",
+    "Cust_Status": "SUSPENDED",
+    "Created_Timestamp": "2023-05-12T10:00:00Z"
+  },
+  {
+    "Cust_ID": "CUST-1007",
+    "First Name": "George",
+    "Last Name": "Clark",
+    "Contact Email": "george.c@clark.org",
+    "Phone Number": "555-0107",
+    "Birth_Date": "1965-09-25",
+    "Cust_Status": "ACTIVE",
+    "Created_Timestamp": "2023-06-01T12:00:00Z"
+  },
+  {
+    "Cust_ID": "CUST-1008",
+    "First Name": "Hannah",
+    "Last Name": "Abbott",
+    "Contact Email": "hannah@botany.ac.uk",
+    "Phone Number": "555-0108",
+    "Birth_Date": "1992-06-18",
+    "Cust_Status": "ACTIVE",
+    "Created_Timestamp": "2023-07-04T15:30:00Z"
+  },
+  {
+    "Cust_ID": "CUST-1009",
+    "First Name": "Ian",
+    "Last Name": "Malcolm",
+    "Contact Email": "ian.chaos@dino.edu",
+    "Phone Number": "555-0109",
+    "Birth_Date": "1972-01-05",
+    "Cust_Status": "INACTIVE",
+    "Created_Timestamp": "2023-08-19T13:45:00Z"
+  },
+  {
+    "Cust_ID": "CUST-1010",
+    "First Name": "Julia",
+    "Last Name": "Roberts",
+    "Contact Email": "julia.r@hollywood.com",
+    "Phone Number": "555-0110",
+    "Birth_Date": "1967-10-28",
+    "Cust_Status": "ACTIVE",
+    "Created_Timestamp": "2023-09-23T17:10:00Z"
+  }
+]

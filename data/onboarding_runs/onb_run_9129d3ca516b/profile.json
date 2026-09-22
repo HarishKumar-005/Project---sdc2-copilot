@@ -1,0 +1,408 @@
+{
+  "source_id": "crm_salesforce",
+  "fingerprint_hash": "632d10757394d60ec2b442e62455749486cf7d15bfd53e83af728dcd11b88679",
+  "total_rows": 10,
+  "total_columns": 8,
+  "columns": [
+    {
+      "column_name": "Cust_ID",
+      "normalized_name": "cust_id",
+      "inferred_type": "string",
+      "polars_type": "String",
+      "total_count": 10,
+      "null_count": 0,
+      "null_rate": 0.0,
+      "distinct_count": 10,
+      "uniqueness_rate": 1.0,
+      "is_unique": true,
+      "min_length": 9,
+      "max_length": 9,
+      "samples": [
+        "CUST-1001",
+        "CUST-1002",
+        "CUST-1003",
+        "CUST-1004",
+        "CUST-1005"
+      ],
+      "top_values": [
+        {
+          "value": "CUST-1001",
+          "count": 1,
+          "percentage": 10.0
+        },
+        {
+          "value": "CUST-1002",
+          "count": 1,
+          "percentage": 10.0
+        },
+        {
+          "value": "CUST-1003",
+          "count": 1,
+          "percentage": 10.0
+        },
+        {
+          "value": "CUST-1004",
+          "count": 1,
+          "percentage": 10.0
+        },
+        {
+          "value": "CUST-1005",
+          "count": 1,
+          "percentage": 10.0
+        }
+      ],
+      "date_patterns": []
+    },
+    {
+      "column_name": "First Name",
+      "normalized_name": "first_name",
+      "inferred_type": "string",
+      "polars_type": "String",
+      "total_count": 10,
+      "null_count": 0,
+      "null_rate": 0.0,
+      "distinct_count": 10,
+      "uniqueness_rate": 1.0,
+      "is_unique": true,
+      "min_length": 3,
+      "max_length": 7,
+      "samples": [
+        "A***",
+        "B***",
+        "C***",
+        "D***",
+        "E***"
+      ],
+      "top_values": [
+        {
+          "value": "A***",
+          "count": 1,
+          "percentage": 10.0
+        },
+        {
+          "value": "B***",
+          "count": 1,
+          "percentage": 10.0
+        },
+        {
+          "value": "C***",
+          "count": 1,
+          "percentage": 10.0
+        },
+        {
+          "value": "D***",
+          "count": 1,
+          "percentage": 10.0
+        },
+        {
+          "value": "E***",
+          "count": 1,
+          "percentage": 10.0
+        }
+      ],
+      "date_patterns": []
+    },
+    {
+      "column_name": "Last Name",
+      "normalized_name": "last_name",
+      "inferred_type": "string",
+      "polars_type": "String",
+      "total_count": 10,
+      "null_count": 0,
+      "null_rate": 0.0,
+      "distinct_count": 10,
+      "uniqueness_rate": 1.0,
+      "is_unique": true,
+      "min_length": 5,
+      "max_length": 9,
+      "samples": [
+        "S***",
+        "J***",
+        "B***",
+        "P***",
+        "W***"
+      ],
+      "top_values": [
+        {
+          "value": "S***",
+          "count": 1,
+          "percentage": 10.0
+        },
+        {
+          "value": "J***",
+          "count": 1,
+          "percentage": 10.0
+        },
+        {
+          "value": "B***",
+          "count": 1,
+          "percentage": 10.0
+        },
+        {
+          "value": "P***",
+          "count": 1,
+          "percentage": 10.0
+        },
+        {
+          "value": "W***",
+          "count": 1,
+          "percentage": 10.0
+        }
+      ],
+      "date_patterns": []
+    },
+    {
+      "column_name": "Contact Email",
+      "normalized_name": "contact_email",
+      "inferred_type": "string",
+      "polars_type": "String",
+      "total_count": 10,
+      "null_count": 1,
+      "null_rate": 0.1,
+      "distinct_count": 9,
+      "uniqueness_rate": 1.0,
+      "is_unique": true,
+      "min_length": 18,
+      "max_length": 23,
+      "samples": [
+        "a***@example.com",
+        "b***@corporate.org",
+        "d***@themyscira.com",
+        "e***@techcorp.io",
+        "f***@shamrock.net"
+      ],
+      "top_values": [
+        {
+          "value": "a***@example.com",
+          "count": 1,
+          "percentage": 11.11
+        },
+        {
+          "value": "b***@corporate.org",
+          "count": 1,
+          "percentage": 11.11
+        },
+        {
+          "value": "d***@themyscira.com",
+          "count": 1,
+          "percentage": 11.11
+        },
+        {
+          "value": "e***@techcorp.io",
+          "count": 1,
+          "percentage": 11.11
+        },
+        {
+          "value": "f***@shamrock.net",
+          "count": 1,
+          "percentage": 11.11
+        }
+      ],
+      "date_patterns": []
+    },
+    {
+      "column_name": "Phone Number",
+      "normalized_name": "phone_number",
+      "inferred_type": "string",
+      "polars_type": "String",
+      "total_count": 10,
+      "null_count": 1,
+      "null_rate": 0.1,
+      "distinct_count": 9,
+      "uniqueness_rate": 1.0,
+      "is_unique": true,
+      "min_length": 8,
+      "max_length": 8,
+      "samples": [
+        "***-0101",
+        "***-0102",
+        "***-0103",
+        "***-0104",
+        "***-0105"
+      ],
+      "top_values": [
+        {
+          "value": "***-0101",
+          "count": 1,
+          "percentage": 11.11
+        },
+        {
+          "value": "***-0102",
+          "count": 1,
+          "percentage": 11.11
+        },
+        {
+          "value": "***-0103",
+          "count": 1,
+          "percentage": 11.11
+        },
+        {
+          "value": "***-0104",
+          "count": 1,
+          "percentage": 11.11
+        },
+        {
+          "value": "***-0105",
+          "count": 1,
+          "percentage": 11.11
+        }
+      ],
+      "date_patterns": []
+    },
+    {
+      "column_name": "Birth_Date",
+      "normalized_name": "birth_date",
+      "inferred_type": "string",
+      "polars_type": "String",
+      "total_count": 10,
+      "null_count": 1,
+      "null_rate": 0.1,
+      "distinct_count": 9,
+      "uniqueness_rate": 1.0,
+      "is_unique": true,
+      "min_length": 10,
+      "max_length": 10,
+      "samples": [
+        "1985-04-12",
+        "1990-07-21",
+        "1978-11-03",
+        "1995-12-30",
+        "1988-03-14"
+      ],
+      "top_values": [
+        {
+          "value": "1985-04-12",
+          "count": 1,
+          "percentage": 11.11
+        },
+        {
+          "value": "1990-07-21",
+          "count": 1,
+          "percentage": 11.11
+        },
+        {
+          "value": "1978-11-03",
+          "count": 1,
+          "percentage": 11.11
+        },
+        {
+          "value": "1995-12-30",
+          "count": 1,
+          "percentage": 11.11
+        },
+        {
+          "value": "1988-03-14",
+          "count": 1,
+          "percentage": 11.11
+        }
+      ],
+      "date_patterns": [
+        {
+          "pattern": "%Y-%m-%d",
+          "sample_count": 9,
+          "is_ambiguous": false
+        }
+      ]
+    },
+    {
+      "column_name": "Cust_Status",
+      "normalized_name": "cust_status",
+      "inferred_type": "string",
+      "polars_type": "String",
+      "total_count": 10,
+      "null_count": 0,
+      "null_rate": 0.0,
+      "distinct_count": 4,
+      "uniqueness_rate": 0.4,
+      "is_unique": false,
+      "min_length": 6,
+      "max_length": 9,
+      "samples": [
+        "ACTIVE",
+        "INACTIVE",
+        "PENDING",
+        "SUSPENDED"
+      ],
+      "top_values": [
+        {
+          "value": "ACTIVE",
+          "count": 6,
+          "percentage": 60.0
+        },
+        {
+          "value": "INACTIVE",
+          "count": 2,
+          "percentage": 20.0
+        },
+        {
+          "value": "PENDING",
+          "count": 1,
+          "percentage": 10.0
+        },
+        {
+          "value": "SUSPENDED",
+          "count": 1,
+          "percentage": 10.0
+        }
+      ],
+      "date_patterns": []
+    },
+    {
+      "column_name": "Created_Timestamp",
+      "normalized_name": "created_timestamp",
+      "inferred_type": "string",
+      "polars_type": "String",
+      "total_count": 10,
+      "null_count": 0,
+      "null_rate": 0.0,
+      "distinct_count": 10,
+      "uniqueness_rate": 1.0,
+      "is_unique": true,
+      "min_length": 20,
+      "max_length": 20,
+      "samples": [
+        "2023-01-15T09:30:00Z",
+        "2023-02-01T14:15:00Z",
+        "2023-02-15T11:00:00Z",
+        "2023-03-10T16:45:00Z",
+        "2023-04-05T08:20:00Z"
+      ],
+      "top_values": [
+        {
+          "value": "2023-01-15T09:30:00Z",
+          "count": 1,
+          "percentage": 10.0
+        },
+        {
+          "value": "2023-02-01T14:15:00Z",
+          "count": 1,
+          "percentage": 10.0
+        },
+        {
+          "value": "2023-02-15T11:00:00Z",
+          "count": 1,
+          "percentage": 10.0
+        },
+        {
+          "value": "2023-03-10T16:45:00Z",
+          "count": 1,
+          "percentage": 10.0
+        },
+        {
+          "value": "2023-04-05T08:20:00Z",
+          "count": 1,
+          "percentage": 10.0
+        }
+      ],
+      "date_patterns": [
+        {
+          "pattern": "%Y-%m-%dT%H:%M:%SZ",
+          "sample_count": 10,
+          "is_ambiguous": false
+        }
+      ]
+    }
+  ],
+  "profiled_at": "2026-09-20T13:16:36.843554Z",
+  "sampling_policy": "masked"
+}

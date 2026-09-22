@@ -322,3 +322,13 @@ class MonitorValidationResponse(BaseModel):
     discovered_columns: dict[str, ColumnMetadataSchema] = Field(default_factory=dict)
     primary_keys: list[str] = Field(default_factory=list)
 
+
+class MonitorRecordsResponse(BaseModel):
+    """Bounded collection of generic records from a monitored source table."""
+
+    monitor: str
+    records: list[dict[str, Any]]
+    total: int
+    limit: int
+
+

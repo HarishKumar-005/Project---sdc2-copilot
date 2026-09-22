@@ -160,6 +160,12 @@ def render_login_gate() -> None:
                             err_msg = auth_svc.last_error or "Invalid email or password."
                             st.error(f"Sign in failed: {err_msg}")
 
+            st.markdown("<div style='margin-top: 16px; margin-bottom: 12px; text-align: center; color: var(--text-secondary, #8b949e); font-size: 0.85rem;'>— OR LOCAL EVALUATION —</div>", unsafe_allow_html=True)
+            if st.button("⚡ Skip Login (Local Operator / Dev Mode)", type="primary", width="stretch", icon=":material/bolt:", key="btn_skip_auth"):
+                st.session_state["dev_bypass_authenticated"] = True
+                st.session_state.pop("auth_error", None)
+                st.rerun()
+
 
 def render_user_badge(user: Optional[AuthenticatedUser]) -> None:
     """Render authenticated user identity and logout control in the sidebar."""

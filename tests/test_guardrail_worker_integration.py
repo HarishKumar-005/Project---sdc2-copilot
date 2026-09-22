@@ -55,7 +55,7 @@ class TestGuardrailWorkerIntegration:
             guardrail_max_changed_records=25,
             ingestion_batch_size=10,
         )
-        worker = IngestionWorker(db_manager=mock_db, settings=settings)
+        worker = IngestionWorker(db_manager=mock_db, settings=settings, source_name="inventory")
 
         t1 = datetime(2026, 9, 16, 12, 0, 0, tzinfo=timezone.utc)
         # Mock initial checkpoint
@@ -116,7 +116,7 @@ class TestGuardrailWorkerIntegration:
             guardrail_max_changed_records=2,
             ingestion_batch_size=10,
         )
-        worker = IngestionWorker(db_manager=mock_db, settings=settings)
+        worker = IngestionWorker(db_manager=mock_db, settings=settings, source_name="inventory")
 
         t_prev = datetime(2026, 9, 15, 11, 0, 0, tzinfo=timezone.utc)
         t_batch = datetime(2026, 9, 16, 12, 0, 0, tzinfo=timezone.utc)
@@ -181,7 +181,7 @@ class TestGuardrailWorkerIntegration:
 
     def test_guardrail_does_not_mutate_source_records(self, mock_db: MagicMock) -> None:
         """Verify guardrail evaluation strictly preserves source record fields and types."""
-        worker = IngestionWorker(db_manager=mock_db)
+        worker = IngestionWorker(db_manager=mock_db, source_name="inventory")
         t = datetime(2026, 9, 16, 12, 0, 0, tzinfo=timezone.utc)
         record = InventorySourceRow("SKU-1", "WH-1", 100, 20, "ACTIVE", t)
         original_dict = record.to_dict()
@@ -202,7 +202,7 @@ class TestGuardrailWorkerIntegration:
         self, mock_db: MagicMock
     ) -> None:
         """Verify that SCD2 invariant failure raises error, marks run FAILED, and preserves checkpoint."""
-        worker = IngestionWorker(db_manager=mock_db)
+        worker = IngestionWorker(db_manager=mock_db, source_name="inventory")
         t_prev = datetime(2026, 9, 16, 12, 0, 0, tzinfo=timezone.utc)
         checkpoint = ProcessingCheckpointRow("inventory", "inventory_source", t_prev)
         worker.checkpoint_repo.get_checkpoint = MagicMock(return_value=checkpoint)

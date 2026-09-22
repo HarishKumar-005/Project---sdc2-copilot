@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 import logging
+from threading import RLock
 from typing import Any, Optional
 from uuid import UUID, uuid4
 
@@ -21,6 +22,22 @@ class ProcessingRunRepository(BaseRepository):
 
     TABLE_NAME = "processing_run"
 
+    def __init__(
+        self,
+        db: Optional[Any] = None,
+        *,
+        in_memory: bool = False,
+    ) -> None:
+        super().__init__(db=db)
+        self._in_memory = in_memory or (not self.db.is_configured)
+        self._lock = RLock()
+        self._memory_runs: dict[UUID, ProcessingRunRow] = {}
+
+    @property
+    def in_memory_mode(self) -> bool:
+        """Return True if running in in-memory mode."""
+        return self._in_memory
+
     def create_run(
         self,
         source_name: str,
@@ -32,6 +49,23 @@ class ProcessingRunRepository(BaseRepository):
         """Create an initial run entry in PROCESSING (or specified) status."""
         active_run_id = run_id or uuid4()
         now = started_at or datetime.now(timezone.utc)
+
+        if self._in_memory:
+            with self._lock:
+                run_row = ProcessingRunRow(
+                    run_id=active_run_id,
+                    source_name=source_name,
+                    status=status,
+                    started_at=now,
+                    completed_at=None,
+                    records_seen=0,
+                    records_changed=0,
+                    records_held=0,
+                    error_message=None,
+                    created_at=now,
+                )
+                self._memory_runs[active_run_id] = run_row
+                return run_row
 
         query = f"""
             INSERT INTO {self.TABLE_NAME} (
@@ -73,6 +107,26 @@ class ProcessingRunRepository(BaseRepository):
     ) -> ProcessingRunRow:
         """Explicitly ensure run status is PROCESSING."""
         now = started_at or datetime.now(timezone.utc)
+        if self._in_memory:
+            with self._lock:
+                existing = self._memory_runs.get(run_id)
+                if not existing:
+                    raise EntityNotFoundError(f"Processing run '{run_id}' not found", table=self.TABLE_NAME)
+                updated = ProcessingRunRow(
+                    run_id=existing.run_id,
+                    source_name=existing.source_name,
+                    status=RunStatus.PROCESSING.value,
+                    started_at=now,
+                    completed_at=existing.completed_at,
+                    records_seen=existing.records_seen,
+                    records_changed=existing.records_changed,
+                    records_held=existing.records_held,
+                    error_message=existing.error_message,
+                    created_at=existing.created_at,
+                )
+                self._memory_runs[run_id] = updated
+                return updated
+
         query = f"""
             UPDATE {self.TABLE_NAME}
             SET status = %s, started_at = %s
@@ -106,6 +160,26 @@ class ProcessingRunRepository(BaseRepository):
     ) -> ProcessingRunRow:
         """Mark a run as COMMITTED with execution record metrics."""
         now = completed_at or datetime.now(timezone.utc)
+        if self._in_memory:
+            with self._lock:
+                existing = self._memory_runs.get(run_id)
+                if not existing:
+                    raise EntityNotFoundError(f"Processing run '{run_id}' not found", table=self.TABLE_NAME)
+                updated = ProcessingRunRow(
+                    run_id=existing.run_id,
+                    source_name=existing.source_name,
+                    status=RunStatus.COMMITTED.value,
+                    started_at=existing.started_at,
+                    completed_at=now,
+                    records_seen=records_seen,
+                    records_changed=records_changed,
+                    records_held=records_held,
+                    error_message=None,
+                    created_at=existing.created_at,
+                )
+                self._memory_runs[run_id] = updated
+                return updated
+
         query = f"""
             UPDATE {self.TABLE_NAME}
             SET status = %s,
@@ -151,6 +225,26 @@ class ProcessingRunRepository(BaseRepository):
     ) -> ProcessingRunRow:
         """Mark a run as HELD with execution record metrics and zero changes committed."""
         now = completed_at or datetime.now(timezone.utc)
+        if self._in_memory:
+            with self._lock:
+                existing = self._memory_runs.get(run_id)
+                if not existing:
+                    raise EntityNotFoundError(f"Processing run '{run_id}' not found", table=self.TABLE_NAME)
+                updated = ProcessingRunRow(
+                    run_id=existing.run_id,
+                    source_name=existing.source_name,
+                    status=RunStatus.HELD.value,
+                    started_at=existing.started_at,
+                    completed_at=now,
+                    records_seen=records_seen,
+                    records_changed=0,
+                    records_held=records_held,
+                    error_message=None,
+                    created_at=existing.created_at,
+                )
+                self._memory_runs[run_id] = updated
+                return updated
+
         query = f"""
             UPDATE {self.TABLE_NAME}
             SET status = %s,
@@ -194,6 +288,26 @@ class ProcessingRunRepository(BaseRepository):
         """Mark a run as FAILED with an error message."""
         now = completed_at or datetime.now(timezone.utc)
         clean_error = error_message.strip() if error_message else "Unknown execution error"
+        if self._in_memory:
+            with self._lock:
+                existing = self._memory_runs.get(run_id)
+                if not existing:
+                    raise EntityNotFoundError(f"Processing run '{run_id}' not found", table=self.TABLE_NAME)
+                updated = ProcessingRunRow(
+                    run_id=existing.run_id,
+                    source_name=existing.source_name,
+                    status=RunStatus.FAILED.value,
+                    started_at=existing.started_at,
+                    completed_at=now,
+                    records_seen=existing.records_seen,
+                    records_changed=existing.records_changed,
+                    records_held=existing.records_held,
+                    error_message=clean_error,
+                    created_at=existing.created_at,
+                )
+                self._memory_runs[run_id] = updated
+                return updated
+
         query = f"""
             UPDATE {self.TABLE_NAME}
             SET status = %s,
@@ -222,6 +336,10 @@ class ProcessingRunRepository(BaseRepository):
         conn: Optional[psycopg.Connection[Any]] = None,
     ) -> Optional[ProcessingRunRow]:
         """Fetch a specific processing run by its ID."""
+        if self._in_memory:
+            with self._lock:
+                return self._memory_runs.get(run_id)
+
         query = f"""
             SELECT run_id, source_name, status, started_at, completed_at,
                    records_seen, records_changed, records_held, error_message, created_at
@@ -244,6 +362,14 @@ class ProcessingRunRepository(BaseRepository):
         conn: Optional[psycopg.Connection[Any]] = None,
     ) -> list[ProcessingRunRow]:
         """Fetch the most recent processing runs ordered by started_at DESC."""
+        if self._in_memory:
+            with self._lock:
+                runs = list(self._memory_runs.values())
+                if source_name:
+                    runs = [r for r in runs if r.source_name == source_name]
+                runs.sort(key=lambda r: (r.started_at or r.created_at, r.created_at), reverse=True)
+                return runs[:limit]
+
         where_clause = "WHERE source_name = %s" if source_name else ""
         params: list[Any] = [source_name] if source_name else []
 
@@ -259,8 +385,8 @@ class ProcessingRunRepository(BaseRepository):
             with self._connection(conn) as c:
                 with c.cursor() as cur:
                     cur.execute(query, params)
-                    rows = cur.fetchall()
-            return [ProcessingRunRow.from_dict(r) for r in rows]
+                    row = cur.fetchall()
+            return [ProcessingRunRow.from_dict(r) for r in row]
         except Exception as exc:
             raise self._wrap_db_error(exc, query=query, table=self.TABLE_NAME) from exc
 
@@ -270,6 +396,30 @@ class ProcessingRunRepository(BaseRepository):
         conn: Optional[psycopg.Connection[Any]] = None,
     ) -> dict[str, int]:
         """Return counts of runs grouped by status, plus total and record aggregates."""
+        if self._in_memory:
+            with self._lock:
+                counts = {
+                    "total": 0,
+                    "processing": 0,
+                    "committed": 0,
+                    "held": 0,
+                    "failed": 0,
+                    "total_records_processed": 0,
+                    "total_records_changed": 0,
+                    "total_records_held": 0,
+                }
+                for r in self._memory_runs.values():
+                    if source_name and r.source_name != source_name:
+                        continue
+                    st = str(r.status).lower()
+                    counts["total"] += 1
+                    if st in counts:
+                        counts[st] += 1
+                    counts["total_records_processed"] += r.records_seen
+                    counts["total_records_changed"] += r.records_changed
+                    counts["total_records_held"] += r.records_held
+                return counts
+
         where_clause = "WHERE source_name = %s" if source_name else ""
         params: list[Any] = [source_name] if source_name else []
 

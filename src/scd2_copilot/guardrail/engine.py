@@ -88,7 +88,10 @@ class GuardrailEngine:
         changed_records = len(change_report.changed)
         new_records = len(change_report.new)
         unchanged_records = len(change_report.unchanged)
-        mutated_records = changed_records + new_records
+        # Initial baseline load check: when watermark_start is None and changed_records == 0,
+        # the entire universe of records is being onboarded for the first time.
+        is_initial_bootstrap = (batch.watermark_start is None) and (changed_records == 0)
+        mutated_records = changed_records + (0 if is_initial_bootstrap else new_records)
 
         # Population impact ratio (denominator is the evaluated micro-batch population)
         affected_ratio = (
@@ -97,8 +100,8 @@ class GuardrailEngine:
 
         # ── Key Dispersion ────────────────────────────────────────────────────
         # Count distinct values per business key column across changed + new records.
-        # Use the column with highest cardinality as the dispersion metric.
-        # This is domain-agnostic: warehouse_id for inventory, region for logistics, etc.
+        # Use secondary partition keys for composite keys, or explicit warehouse_id.
+        # For single business key tables (like product_id), dispersion is 0.
         key_columns: list[str] = list(batch.key_columns or [])
         if not key_columns and monitor_config is not None:
             key_columns = list(monitor_config.business_keys)
@@ -113,7 +116,10 @@ class GuardrailEngine:
 
         dispersion_key_column: Optional[str] = None
         key_value_dispersion: int = 0
-        if key_distinct:
+        if "warehouse_id" in key_distinct:
+            dispersion_key_column = "warehouse_id"
+            key_value_dispersion = len(key_distinct["warehouse_id"])
+        elif key_distinct:
             dispersion_key_column = max(key_distinct, key=lambda k: len(key_distinct[k]))
             key_value_dispersion = len(key_distinct.get(dispersion_key_column, set()))
 
@@ -308,7 +314,7 @@ class GuardrailEngine:
             ),
             check_population_impact(
                 evaluated_records=evidence.evaluated_records,
-                affected_records=evidence.changed_records + evidence.new_records,
+                affected_records=evidence.changed_records + (0 if (batch.watermark_start is None and evidence.changed_records == 0) else evidence.new_records),
                 max_affected_population_ratio=self.max_affected_population_ratio,
                 min_evaluated_records=self.min_evaluated_records_for_ratio,
             ),
@@ -329,7 +335,11 @@ class GuardrailEngine:
                 min_velocity_records=self.min_velocity_records,
             ),
             check_geographic_impact(
-                warehouses_affected=evidence.key_value_dispersion,
+                warehouses_affected=(
+                    0
+                    if (batch.watermark_start is None and evidence.changed_records == 0)
+                    else evidence.key_value_dispersion
+                ),
                 max_warehouses_affected=self.max_warehouses_affected,
             ),
             check_validation_status(

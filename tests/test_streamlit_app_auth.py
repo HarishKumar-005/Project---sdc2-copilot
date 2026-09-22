@@ -46,6 +46,7 @@ def test_apptest_authenticated_flow():
         user_metadata={"full_name": "Jane Analyst"},
     )
     at.session_state["supabase_session"] = session
+    at.session_state["platform_mode_selector"] = "⚡ Live Guardrail Monitor (V2)"
 
     with patch("src.scd2_copilot.api.client.ApiClient.check_health", side_effect=ApiConnectionError("offline")):
         at.run()

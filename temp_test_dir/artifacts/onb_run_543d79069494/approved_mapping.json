@@ -1,0 +1,98 @@
+{
+  "mapping_version_id": "map_crm_v1",
+  "source_id": "src_crm",
+  "source_fingerprint": "fp123",
+  "source_schema_version": 1,
+  "canonical_schema_name": "customer",
+  "canonical_schema_version": 1,
+  "version_number": 1,
+  "mappings": [
+    {
+      "source_field": "id",
+      "target_field": "customer_id",
+      "mapping_type": "DIRECT",
+      "transformations": [],
+      "decision": "APPROVE",
+      "reviewer": "admin@example.com",
+      "review_notes": null,
+      "confidence": 1.0,
+      "provenance_reason": "ID direct"
+    },
+    {
+      "source_field": "fname",
+      "target_field": "first_name",
+      "mapping_type": "DIRECT",
+      "transformations": [],
+      "decision": "APPROVE",
+      "reviewer": "admin@example.com",
+      "review_notes": null,
+      "confidence": 1.0,
+      "provenance_reason": "First name direct"
+    },
+    {
+      "source_field": "lname",
+      "target_field": "last_name",
+      "mapping_type": "DIRECT",
+      "transformations": [],
+      "decision": "APPROVE",
+      "reviewer": "admin@example.com",
+      "review_notes": null,
+      "confidence": 1.0,
+      "provenance_reason": "Last name direct"
+    },
+    {
+      "source_field": "email_addr",
+      "target_field": "email",
+      "mapping_type": "DIRECT",
+      "transformations": [],
+      "decision": "APPROVE",
+      "reviewer": "admin@example.com",
+      "review_notes": null,
+      "confidence": 1.0,
+      "provenance_reason": "Email direct"
+    },
+    {
+      "source_field": "dob",
+      "target_field": "date_of_birth",
+      "mapping_type": "DIRECT",
+      "transformations": [],
+      "decision": "APPROVE",
+      "reviewer": "admin@example.com",
+      "review_notes": null,
+      "confidence": 1.0,
+      "provenance_reason": "DOB direct"
+    },
+    {
+      "source_field": "cust_status",
+      "target_field": "status",
+      "mapping_type": "DIRECT",
+      "transformations": [],
+      "decision": "APPROVE",
+      "reviewer": "admin@example.com",
+      "review_notes": null,
+      "confidence": 1.0,
+      "provenance_reason": "Status direct"
+    },
+    {
+      "source_field": "signup_date",
+      "target_field": "created_at",
+      "mapping_type": "TRANSFORMED",
+      "transformations": [
+        {
+          "op": "PARSE_DATE",
+          "params": {}
+        }
+      ],
+      "decision": "APPROVE",
+      "reviewer": "admin@example.com",
+      "review_notes": null,
+      "confidence": 1.0,
+      "provenance_reason": "Signup date to created_at"
+    }
+  ],
+  "is_complete": true,
+  "unmapped_required_fields": [],
+  "approved_by": "test_reviewer",
+  "approved_at": "2026-09-19T11:04:53.108342Z",
+  "supersedes_version_id": null
+}
